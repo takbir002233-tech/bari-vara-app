@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#1e3a8a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="স্মার্ট বিলিং">
+  <title>স্মার্ট বিলিং সিস্টেম - বিদ্যুৎ, বাসা ভাড়া ও আয়-ব্যয়</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <link rel="apple-touch-icon" href="icon-512.png">
+  <link rel="stylesheet" href="style.css">
+  <!-- 100% Offline Bundled Libraries for Zero-Latency Instant Load -->
+  <script src="lucide.min.js"></script>
+  <script src="html2pdf.bundle.min.js"></script>
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- Top Header Bar -->
+    <header class="app-header">
+      <div class="header-top">
+        <div class="brand-info">
+          <div class="brand-icon" style="padding: 0; background: transparent; display: flex; align-items: center; justify-content: center;">
+            <img src="icon.svg" alt="App Logo" style="width: 42px; height: 42px; border-radius: 10px; box-shadow: 0 3px 8px rgba(0,0,0,0.25); display: block;">
+          </div>
+          <div class="brand-text">
+            <h1 id="headerHouseName">সম্রাট শাহজাহান টাওয়ার</h1>
+            <p id="headerSubtitle">স্মার্ট বিলিং ও খতিয়ান সিস্টেম</p>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button id="btnOpenGmailBackup" class="gmail-backup-badge" title="জিমেইল ক্লাউড ব্যাকআপ">
+            <i data-lucide="mail"></i>
+            <span id="headerGmailText">Gmail ব্যাকআপ</span>
+          </button>
+          <button id="btnOpenSettings" class="icon-btn" title="সেটিংস ও ব্যাকআপ">
+            <i data-lucide="settings"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Month Selector Bar -->
+      <div class="month-selector-bar">
+        <button id="btnPrevMonth" class="month-nav-btn" title="পূর্বের মাস">
+          <i data-lucide="chevron-left"></i>
+        </button>
+        <div class="current-month-display">
+          <i data-lucide="calendar"></i>
+          <select id="monthSelect" class="month-dropdown">
+            <!-- Populated via JS -->
+          </select>
+        </div>
+        <button id="btnNextMonth" class="month-nav-btn" title="পরের মাস">
+          <i data-lucide="chevron-right"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      
+      <!-- Overdue Alert Banner -->
+      <div id="overdueAlertBanner" class="alert-banner" style="display: none;">
+        <i data-lucide="alert-triangle"></i>
+        <div>
+          <strong>সতর্কতা:</strong> চলতি মাসের ১০ তারিখ পার হয়েছে! ১০% জরিমানাসহ বকেয়া লাল চিহ্নিত করা হয়েছে।
+        </div>
+      </div>
+
+      <!-- ================================================================= -->
+      <!-- PAGE 0: প্রথম পেজ (হোম / ৩টি প্রধান মেন্যু কার্ড)                 -->
+      <!-- ================================================================= -->
+      <section id="pageHome" class="app-page active">
+        <div class="home-welcome-card">
+          <div style="font-size: 13px; font-weight: 700; color: #1e3a8a; margin-bottom: 4px;">স্বাগতম! হিসাব দেখতে নিচের যেকোনো অপশনে চাপ দিন:</div>
+          <div style="font-size: 11.5px; color: #64748b;">বিদ্যুৎ বিল, বাসা ভাড়া বা আয়-ব্যয়ের হিসাব দেখতে সংশ্লিষ্ট মেন্যুতে যান।</div>
+        </div>
+
+        <div class="home-menu-grid">
+          
+          <!-- Card 1: মোট আয়-ব্যয় -->
+          <div class="home-menu-card ledger-card" id="cardGoLedger">
+            <div class="card-icon-wrap" style="background: #faf5ff; color: #7c3aed;">
+              <i data-lucide="book-open"></i>
+            </div>
+            <div class="card-text-wrap">
+              <div class="card-title" style="color: #5b21b6;">১. মোট আয় - ব্যয় হিসাব</div>
+              <div class="card-desc">তারিখ, বিবরণ, ক্যাশ আয়/ব্যয় ও ব্যাংক আয়/ব্যয় খতিয়ান</div>
+              <div class="card-stats-preview">
+                <div>মোট আয়: <strong id="homeLedgerIn" style="color: #15803d;">৳০</strong></div>
+                <div>মোট ব্যয়: <strong id="homeLedgerOut" style="color: #b91c1c;">৳০</strong></div>
+                <div>ক্যাশ উদ্বৃত্ত: <strong id="homeLedgerCash">৳০</strong></div>
+                <div>নেট ব্যালেন্স: <strong id="homeLedgerNet" style="color: #7c3aed;">৳০</strong></div>
+              </div>
+            </div>
+            <div class="card-arrow">
+              <i data-lucide="chevron-right"></i>
+            </div>
+          </div>
+
+          <!-- Card 2: বিদ্যুৎ বিল -->
+          <div class="home-menu-card electric-card" id="cardGoElectric">
+            <div class="card-icon-wrap" style="background: #eff6ff; color: #2563eb;">
+              <i data-lucide="zap"></i>
+            </div>
+            <div class="card-text-wrap">
+              <div class="card-title" style="color: #1e3a8a;">২. বিদ্যুৎ বিল এর হিসাব</div>
+              <div class="card-desc">বর্তমান/সাবেক রিডিং, সার্ভিস চার্জ, ব্যবহৃত ইউনিট ও রশিদ</div>
+              <div class="card-stats-preview">
+                <div>সর্বমোট রিডিং: <strong id="homeElecUnits">০</strong></div>
+                <div>মোট টাকা: <strong id="homeElecAmount">৳০</strong></div>
+                <div>আদায়: <strong id="homeElecPaid" style="color: #15803d;">৳০</strong></div>
+                <div>বকেয়া: <strong id="homeElecDue" style="color: #dc2626;">৳০</strong></div>
+              </div>
+            </div>
+            <div class="card-arrow">
+              <i data-lucide="chevron-right"></i>
+            </div>
+          </div>
+
+          <!-- Card 3: বাসা ভাড়া -->
+          <div class="home-menu-card rent-card" id="cardGoRent">
+            <div class="card-icon-wrap" style="background: #ecfdf5; color: #059669;">
+              <i data-lucide="home"></i>
+            </div>
+            <div class="card-text-wrap">
+              <div class="card-title" style="color: #065f46;">৩. বাসা ভাড়ার হিসাব</div>
+              <div class="card-desc">রুম নম্বর, ভাড়াটিয়ার নাম, ভাড়ার টাকা ও Paid/Unpaid</div>
+              <div class="card-stats-preview">
+                <div>মোট রুম: <strong id="homeRentRooms">০ টি</strong></div>
+                <div>মোট ভাড়া: <strong id="homeRentAmount">৳০</strong></div>
+                <div>আদায়: <strong id="homeRentPaid" style="color: #15803d;">৳০</strong></div>
+                <div>বকেয়া: <strong id="homeRentDue" style="color: #dc2626;">৳০</strong></div>
+              </div>
+            </div>
+            <div class="card-arrow">
+              <i data-lucide="chevron-right"></i>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Quick Add Section on Home Screen -->
+        <div style="margin-top: 14px; background: white; border: 1.5px solid var(--border-color); border-radius: var(--radius-md); padding: 12px 14px;">
+          <div style="font-size: 12.5px; font-weight: 700; color: #1e3a8a; margin-bottom: 8px;">⚡ দ্রুত নতুন ডাটা যোগ করুন (Quick Add):</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;">
+            <button type="button" id="btnHomeAddLedger" class="btn-primary" style="font-size: 11px; padding: 8px 4px; justify-content: center; background: #7c3aed;">
+              <i data-lucide="plus"></i> আয়/ব্যয়
+            </button>
+            <button type="button" id="btnHomeAddElec" class="btn-primary" style="font-size: 11px; padding: 8px 4px; justify-content: center; background: #1e3a8a;">
+              <i data-lucide="plus"></i> বিদ্যুৎ যোগ
+            </button>
+            <button type="button" id="btnHomeAddRent" class="btn-primary" style="font-size: 11px; padding: 8px 4px; justify-content: center; background: #059669;">
+              <i data-lucide="plus"></i> ভাড়া যোগ
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================= -->
+      <!-- PAGE 1: বিদ্যুৎ এর হিসাব (Dedicated Full Page)                    -->
+      <!-- ================================================================= -->
+      <section id="pageElectric" class="app-page">
+        
+        <!-- Back to Home Button -->
+        <button type="button" class="btn-back-home" onclick="switchPage('pageHome')">
+          <i data-lucide="arrow-left"></i>
+          <span>প্রধান মেন্যু / হোম পেজে ফিরুন</span>
+        </button>
+
+        <!-- Electric Header Summary Box -->
+        <div class="register-header-box">
+          <div class="reg-box-left">
+            <div>সর্বমোট ব্যবহৃত রিডিং: <strong id="regTotalUnits" style="color: #2563eb;">০ ইউনিট</strong></div>
+            <div style="margin-top: 3px;">সর্বমোট টাকা: <strong id="regTotalAmount" style="color: #059669;">৳০</strong></div>
+          </div>
+          <div class="reg-box-center">
+            <h2 id="regHouseTitle">সম্রাট শাহজাহান টাওয়ার</h2>
+            <div class="reg-sub-badge">বিদ্যুৎ এর হিসাব</div>
+          </div>
+          <div class="reg-box-right">
+            <div>মোট আদায়: <strong id="regTotalPaid" style="color: #15803d;">৳০</strong></div>
+            <div style="margin-top: 3px;">মোট বকেয়া: <strong id="regTotalDue" style="color: #dc2626;">৳০</strong></div>
+          </div>
+        </div>
+
+        <!-- Action Row (Prominent Add New Button & Settings) -->
+        <div class="action-buttons-row" style="margin-bottom: 10px; flex-wrap: wrap;">
+          <button id="btnOpenAddElectricModal" class="btn-primary" style="font-size: 13px; font-weight: 800; background: #1e3a8a; padding: 10px 14px;">
+            <i data-lucide="plus-circle" style="width: 18px; height: 18px;"></i>
+            ➕ নতুন বিদ্যুৎ রিডিং এন্ট্রি
+          </button>
+          <button id="btnOpenElecSettings" class="btn-secondary" style="color: #1e3a8a; border-color: #93c5fd; background: #eff6ff; font-weight: 700;">
+            <i data-lucide="settings"></i>
+            ⚙️ ইউনিট রেট (<span id="elecCurrentUnitRateDisplay">৳৮.৫</span>)
+          </button>
+          <button id="btnOpenRolloverModal" class="btn-secondary">
+            <i data-lucide="repeat"></i>
+            পরবর্তী মাস তৈরি
+          </button>
+        </div>
+
+        <!-- Search & Filter -->
+        <div class="controls-bar">
+          <div class="search-input-wrapper">
+            <i data-lucide="search" class="search-icon"></i>
+            <input type="text" id="electricSearchInput" class="search-input" placeholder="রুম নং বা নাম দিয়ে খুঁজুন...">
+          </div>
+        </div>
+
+        <!-- Image 2 Register Table with FULL Bengali Headers -->
+        <div class="table-responsive-wrapper">
+          <table class="register-sheet-table">
+            <thead>
+              <tr>
+                <th style="width: 55px;">রুম নং</th>
+                <th style="width: 75px;">তারিখ</th>
+                <th>বর্তমান রিডিং</th>
+                <th>সাবেক রিডিং</th>
+                <th>ব্যবহৃত রিডিং</th>
+                <th style="width: 80px;">সার্ভিস চার্জ</th>
+                <th>টাকা (৳)</th>
+                <th class="no-print" style="width: 110px;">অ্যাকশন</th>
+              </tr>
+            </thead>
+            <tbody id="electricTableBody">
+              <!-- Populated dynamically -->
+            </tbody>
+            <tfoot>
+              <tr class="table-total-row">
+                <td colspan="4" style="text-align: right; font-weight: 800;">সর্বমোট =</td>
+                <td id="electricFootTotalUnits" style="font-weight: 800; color: #2563eb;">০</td>
+                <td id="electricFootTotalService" style="font-weight: 800; color: #d97706;">৳০</td>
+                <td id="electricFootTotalAmount" style="font-weight: 800; color: #15803d;">৳০</td>
+                <td class="no-print"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </section>
+
+      <!-- ================================================================= -->
+      <!-- PAGE 2: বাসা ভাড়ার হিসাব (Dedicated Full Page)                     -->
+      <!-- ================================================================= -->
+      <section id="pageRent" class="app-page">
+        
+        <!-- Back to Home Button -->
+        <button type="button" class="btn-back-home" onclick="switchPage('pageHome')">
+          <i data-lucide="arrow-left"></i>
+          <span>প্রধান মেন্যু / হোম পেজে ফিরুন</span>
+        </button>
+
+        <!-- Rent Header Summary Box -->
+        <div class="register-header-box" style="border-color: #059669; background: #f0fdf4;">
+          <div class="reg-box-left">
+            <div>মোট রুম: <strong id="rentTotalRooms" style="color: #059669;">০ টি</strong></div>
+            <div style="margin-top: 3px;">মোট ভাড়া: <strong id="rentTotalAmount" style="color: #059669;">৳০</strong></div>
+          </div>
+          <div class="reg-box-center">
+            <h2 id="rentHouseTitle" style="color: #059669;">সম্রাট শাহজাহান টাওয়ার</h2>
+            <div class="reg-sub-badge" style="background: #059669; color: white;">বাসা ভাড়ার হিসাব</div>
+          </div>
+          <div class="reg-box-right">
+            <div>মোট আদায়: <strong id="rentTotalPaid" style="color: #15803d;">৳০</strong></div>
+            <div style="margin-top: 3px;">মোট বকেয়া: <strong id="rentTotalDue" style="color: #dc2626;">৳০</strong></div>
+          </div>
+        </div>
+
+        <!-- Action Row (Prominent Add New Button) -->
+        <div class="action-buttons-row" style="margin-bottom: 10px;">
+          <button id="btnOpenAddRentModal" class="btn-primary" style="background: #059669; font-size: 13px; font-weight: 800; padding: 10px 14px;">
+            <i data-lucide="plus-circle" style="width: 18px; height: 18px;"></i>
+            ➕ নতুন ভাড়া এন্ট্রি
+          </button>
+          <button id="btnPrintRentSheet" class="btn-secondary">
+            <i data-lucide="printer"></i>
+            ভাড়া শিট প্রিন্ট
+          </button>
+        </div>
+
+        <!-- Search & Filter -->
+        <div class="controls-bar">
+          <div class="search-input-wrapper">
+            <i data-lucide="search" class="search-icon"></i>
+            <input type="text" id="rentSearchInput" class="search-input" placeholder="রুম নং বা ভাড়াটিয়ার নাম খুঁজুন...">
+          </div>
+          <div class="filter-chips">
+            <button class="filter-chip rent-chip active" data-filter="all">সকল</button>
+            <button class="filter-chip rent-chip" data-filter="unpaid">বকেয়া</button>
+            <button class="filter-chip rent-chip" data-filter="paid">পরিশোধিত</button>
+          </div>
+        </div>
+
+        <!-- Rent Table with Full Headers -->
+        <div class="table-responsive-wrapper">
+          <table class="register-sheet-table">
+            <thead>
+              <tr style="background: #e6f4ea;">
+                <th style="width: 55px;">রুম নং</th>
+                <th>ভাড়াটিয়ার নাম</th>
+                <th style="width: 85px;">মাসের নাম</th>
+                <th style="width: 85px;">দেওয়ার তারিখ</th>
+                <th>ভাড়ার টাকা</th>
+                <th style="width: 75px;">স্ট্যাটাস</th>
+                <th class="no-print" style="width: 80px;">অ্যাকশন</th>
+              </tr>
+            </thead>
+            <tbody id="rentTableBody">
+              <!-- Populated dynamically -->
+            </tbody>
+            <tfoot>
+              <tr class="table-total-row">
+                <td colspan="4" style="text-align: right; font-weight: 800;">সর্বমোট দাবি =</td>
+                <td id="rentFootTotalAmount" style="font-weight: 800; color: #059669;">৳০</td>
+                <td id="rentFootPaidCount" style="font-weight: 700; font-size: 11px;">০ আদায়</td>
+                <td class="no-print"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </section>
+
+      <!-- ================================================================= -->
+      <!-- PAGE 3: মোট আয়-ব্যয় হিসাব (Dedicated Full Page)                    -->
+      <!-- ================================================================= -->
+      <section id="pageLedger" class="app-page">
+        
+        <!-- Back to Home Button -->
+        <button type="button" class="btn-back-home" onclick="switchPage('pageHome')">
+          <i data-lucide="arrow-left"></i>
+          <span>প্রধান মেন্যু / হোম পেজে ফিরুন</span>
+        </button>
+
+        <!-- Ledger Summary Header Box (Photo 1 Khata Layout) -->
+        <div class="khata-header-box">
+          <div class="khata-left-col">
+            <div>ব্যাংক আয়ঃ <strong id="khataBankIn" style="color: #0369a1;">৳০</strong></div>
+            <div>ব্যাংক ব্যয়ঃ <strong id="khataBankOut" style="color: #c2410c;">৳০</strong></div>
+            <div>ক্যাশ ব্যালেন্সঃ <strong id="khataCashBal" style="color: #15803d;">৳০</strong></div>
+          </div>
+          <div class="khata-center-col">
+            <h2 style="font-size: 15px; font-weight: 800; color: #7c3aed;">আয় - ব্যয় খতিয়ান</h2>
+            <div style="font-size: 11px; color: var(--text-muted);">মাসিক মোট হিসাব</div>
+          </div>
+          <div class="khata-right-col">
+            <div>মাসঃ <strong id="khataMonthName">-</strong></div>
+            <div>মোট আয়ঃ <strong id="khataTotalIn" style="color: #15803d;">৳০</strong></div>
+            <div>মোট ব্যয়ঃ <strong id="khataTotalOut" style="color: #b91c1c;">৳০</strong></div>
+            <div style="border-top: 1px solid #cbd5e1; padding-top: 2px;">নেট ব্যালেন্সঃ <strong id="khataNetBal" style="color: #7c3aed; font-size: 13px;">৳০</strong></div>
+          </div>
+        </div>
+
+        <!-- Action Row (Prominent Add New Button) -->
+        <div class="action-buttons-row" style="margin-bottom: 10px;">
+          <button id="btnOpenAddLedgerModal" class="btn-primary" style="background: #7c3aed; font-size: 13px; font-weight: 800; padding: 10px 14px;">
+            <i data-lucide="plus-circle" style="width: 18px; height: 18px;"></i>
+            ➕ নতুন আয় / ব্যয় যোগ
+          </button>
+          <button id="btnPrintLedgerSheet" class="btn-secondary">
+            <i data-lucide="printer"></i>
+            খতিয়ান প্রিন্ট
+          </button>
+        </div>
+
+        <!-- Search & Filter -->
+        <div class="controls-bar">
+          <div class="search-input-wrapper">
+            <i data-lucide="search" class="search-icon"></i>
+            <input type="text" id="ledgerSearchInput" class="search-input" placeholder="তাং বা বিবরণ দিয়ে খুঁজুন...">
+          </div>
+        </div>
+
+        <!-- Photo 1 Khata Table with Full Headers -->
+        <div class="table-responsive-wrapper">
+          <table class="register-sheet-table khata-table">
+            <thead>
+              <tr style="background: #f3e8ff;">
+                <th style="width: 75px;">তাং</th>
+                <th>বিবরণ</th>
+                <th style="width: 70px; color: #15803d;">ক্যাশ আয়</th>
+                <th style="width: 70px; color: #b91c1c;">ক্যাশ ব্যয়</th>
+                <th style="width: 70px; color: #0369a1;">ব্যাংক আয়</th>
+                <th style="width: 70px; color: #c2410c;">ব্যাংক ব্যয়</th>
+                <th class="no-print" style="width: 70px;">অ্যাকশন</th>
+              </tr>
+            </thead>
+            <tbody id="ledgerTableBody">
+              <!-- Populated dynamically -->
+            </tbody>
+            <tfoot>
+              <tr class="table-total-row" style="background: #ede9fe;">
+                <td colspan="2" style="text-align: right; font-weight: 800;">মোট =</td>
+                <td id="footCashIn" style="font-weight: 800; color: #15803d;">৳০</td>
+                <td id="footCashOut" style="font-weight: 800; color: #b91c1c;">৳০</td>
+                <td id="footBankIn" style="font-weight: 800; color: #0369a1;">৳০</td>
+                <td id="footBankOut" style="font-weight: 800; color: #c2410c;">৳০</td>
+                <td class="no-print"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ================================================================= -->
+    <!-- FIXED BOTTOM NAVIGATION BAR (৪টি প্রধান অপশন ও হোম)               -->
+    <!-- ================================================================= -->
+    <nav class="bottom-nav-bar no-print">
+      <button class="bottom-nav-item active" data-page="pageHome">
+        <i data-lucide="layout-dashboard"></i>
+        <span>হোম</span>
+      </button>
+      <button class="bottom-nav-item" data-page="pageLedger">
+        <i data-lucide="book-open"></i>
+        <span>১. আয়-ব্যয়</span>
+      </button>
+      <button class="bottom-nav-item" data-page="pageElectric">
+        <i data-lucide="zap"></i>
+        <span>২. বিদ্যুৎ</span>
+      </button>
+      <button class="bottom-nav-item" data-page="pageRent">
+        <i data-lucide="home"></i>
+        <span>৩. বাসা ভাড়া</span>
+      </button>
+    </nav>
+
+    <!-- Floating Action Button (FAB) -->
+    <button id="fabAdd" class="fab-add no-print" title="নতুন এন্ট্রি যোগ করুন">
+      <i data-lucide="plus"></i>
+    </button>
+
+    <!-- ========================================== -->
+    <!-- MODAL 1: বিদ্যুৎ বিল এডিট / যোগ ড্রয়ার -->
+    <!-- ========================================== -->
+    <div id="electricModal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title" id="electricModalTitle">বিদ্যুৎ হিসাব এন্ট্রি</h2>
+          <button type="button" class="btn-close-modal" id="btnCloseElectricModal">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+
+        <form id="electricForm">
+          <input type="hidden" id="electricFormId">
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">রুম নং *</label>
+              <input type="text" id="electricRoomNo" class="form-input" placeholder="১০১" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">তারিখ *</label>
+              <input type="date" id="electricDate" class="form-input" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">ভাড়াটিয়ার নাম</label>
+            <input type="text" id="electricTenantName" class="form-input" placeholder="নাম লিখুন">
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">বর্তমান রিডিং *</label>
+              <input type="number" step="0.01" id="electricCurrReading" class="form-input" value="0" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">সাবেক রিডিং</label>
+              <input type="number" step="0.01" id="electricPrevReading" class="form-input" value="0">
+            </div>
+          </div>
+
+          <div class="highlight-calc-box">
+            <div class="calc-row">
+              <span>ব্যবহৃত রিডিং (বর্তমান - সাবেক):</span>
+              <strong id="calcElectricUsedUnits" style="color: #2563eb;">০ ইউনিট</strong>
+            </div>
+            <div class="calc-row" style="align-items: center;">
+              <span>ইউনিট প্রতি রেট (৳):</span>
+              <input type="number" step="0.1" id="electricUnitRate" style="width: 80px; padding: 4px 6px; border-radius: 6px; border: 1px solid #93c5fd; text-align: right; font-weight: 700;" value="8.5">
+            </div>
+            <div class="calc-row" style="align-items: center;">
+              <span>সার্ভিস চার্জ (৳):</span>
+              <input type="number" step="1" id="electricServiceCharge" style="width: 80px; padding: 4px 6px; border-radius: 6px; border: 1px solid #93c5fd; text-align: right; font-weight: 700;" value="0">
+            </div>
+            <div class="calc-row total-row">
+              <span>মোট বিদ্যুৎ বিল (টাকা):</span>
+              <strong id="calcElectricTotalBill">৳০</strong>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">পেমেন্ট স্ট্যাটাস</label>
+            <select id="electricPaymentStatus" class="form-select">
+              <option value="unpaid">বকেয়া (Unpaid)</option>
+              <option value="paid">পরিশোধিত (Paid)</option>
+            </select>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" id="btnDeleteElectric" class="btn-danger" style="display: none;">
+              <i data-lucide="trash-2"></i>
+              মুছে ফেলুন
+            </button>
+            <button type="submit" class="btn-primary" style="flex: 1;">
+              <i data-lucide="save"></i>
+              সংরক্ষণ করুন
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL 2: বাসা ভাড়া এডিট / যোগ ড্রয়ার -->
+    <!-- ========================================== -->
+    <div id="rentModal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title" id="rentModalTitle">বাসা ভাড়া এন্ট্রি</h2>
+          <button type="button" class="btn-close-modal" id="btnCloseRentModal">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+
+        <form id="rentForm">
+          <input type="hidden" id="rentFormId">
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">রুম নম্বর *</label>
+              <input type="text" id="rentRoomNo" class="form-input" placeholder="১০১" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">ভাড়াটিয়ার নাম *</label>
+              <input type="text" id="rentTenantName" class="form-input" placeholder="নাম লিখুন" required>
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">যে মাসের ভাড়া (মাস)</label>
+              <input type="text" id="rentMonthLabel" class="form-input" placeholder="যেমন: আগস্ট ২০২৬" readonly>
+            </div>
+            <div class="form-group">
+              <label class="form-label">ভাড়া দেওয়ার তারিখ</label>
+              <input type="date" id="rentPaymentDate" class="form-input">
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">মোট ভাড়া (৳) *</label>
+              <input type="number" id="rentHouseAmount" class="form-input" placeholder="0" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">স্ট্যাটাস</label>
+              <select id="rentStatus" class="form-select">
+                <option value="unpaid">বকেয়া (Unpaid)</option>
+                <option value="paid">পরিশোধিত (Paid)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" id="btnDeleteRent" class="btn-danger" style="display: none;">
+              <i data-lucide="trash-2"></i>
+              মুছে ফেলুন
+            </button>
+            <button type="submit" class="btn-primary" style="flex: 1; background: #059669;">
+              <i data-lucide="save"></i>
+              সংরক্ষণ করুন
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL 3: আয়-ব্যয় এন্ট্রি ড্রয়ার -->
+    <!-- ========================================== -->
+    <div id="ledgerModal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title" id="ledgerModalTitle">আয় / ব্যয় এন্ট্রি</h2>
+          <button type="button" class="btn-close-modal" id="btnCloseLedgerModal">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+
+        <form id="ledgerForm">
+          <input type="hidden" id="ledgerFormId">
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">তাং (তারিখ) *</label>
+              <input type="date" id="ledgerDate" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">খাত / কলাম *</label>
+              <select id="ledgerType" class="form-select" required>
+                <option value="cash_in">ক্যাশ আয় (Cash In)</option>
+                <option value="cash_out">ক্যাশ ব্যয় (Cash Out)</option>
+                <option value="bank_in">ব্যাংক আয় (Bank In)</option>
+                <option value="bank_out">ব্যাংক ব্যয় (Bank Out)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">বিবরণ * (একই তারিখে একাধিক বিবরণ দেওয়া যাবে)</label>
+            <input type="text" id="ledgerDescription" class="form-input" placeholder="যেমন: রুম ১০১ ভাড়া, পাম্প মেরামত, ঝাড়ুদার..." required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">টাকার পরিমাণ (৳) *</label>
+            <input type="number" id="ledgerAmount" class="form-input" placeholder="0" style="font-size: 18px; font-weight: 800;" required>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" id="btnDeleteLedger" class="btn-danger" style="display: none;">
+              <i data-lucide="trash-2"></i>
+              মুছে ফেলুন
+            </button>
+            <button type="submit" class="btn-primary" style="flex: 1; background: #7c3aed;">
+              <i data-lucide="check"></i>
+              সংরক্ষণ করুন
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL 4: কাগজের রশিদের হুবহু ভাউচার (PDF) -->
+    <!-- ========================================== -->
+    <div id="receiptModal" class="modal-overlay">
+      <div class="modal-content" style="max-width: 640px;">
+        <div class="modal-header no-print">
+          <h2 class="modal-title">বিদ্যুৎ বিল রশিদ ভাউচার</h2>
+          <button type="button" class="btn-close-modal" id="btnCloseReceiptModal">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+
+        <div class="no-print" style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 6px 10px; margin-bottom: 10px; font-size: 12px; color: #1e40af; display: flex; align-items: center; justify-content: space-between;">
+          <span>💡 <strong>টিপস:</strong> রশিদের যেকোনো লেখার উপর টাচ করে সরাসরি পরিবর্তন করতে পারবেন।</span>
+          <button type="button" id="btnOpenReceiptSettings" style="background: white; border: 1px solid #93c5fd; color: #1e3a8a; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer;">
+            ⚙️ স্থায়ী টেক্সট সেটিং
+          </button>
+        </div>
+
+        <div id="receiptPaperArea" class="paper-receipt-container">
+          <div class="receipt-bismillah" id="receiptBismillah" contenteditable="true" title="ক্লিক করে এডিট করুন">বিসমিল্লাহির রাহমানির রাহিম</div>
+          <div class="receipt-copy-badge" id="receiptCopyBadge" contenteditable="true" title="ক্লিক করে এডিট করুন">ভাড়াটিয়া কপি</div>
+          <div class="receipt-title" id="receiptHouseTitle" contenteditable="true" title="ক্লিক করে এডিট করুন">সম্রাট শাহজাহান টাওয়ার এর বিদ্যুৎ বিল রশিদ</div>
+          <div class="receipt-phone-line" id="receiptPhoneLine" contenteditable="true" title="ক্লিক করে এডিট করুন">মোবাইলঃ 01614-055666, 01774-151202, 01980-000712</div>
+
+          <div class="receipt-date-row">
+            <span>তারিখঃ <strong id="recDate" contenteditable="true" class="dotted-val">.......................</strong></span>
+          </div>
+
+          <div class="receipt-dotted-row">
+            <div style="flex: 2;">নামঃ <strong id="recName" contenteditable="true" class="dotted-val">-</strong></div>
+            <div style="flex: 1;">রুম নংঃ <strong id="recRoom" contenteditable="true" class="dotted-val">-</strong></div>
+            <div style="flex: 1;">মাসঃ <strong id="recMonth" contenteditable="true" class="dotted-val">-</strong></div>
+          </div>
+
+          <div class="receipt-dotted-row">
+            <div>বর্তমান রিডিংঃ <strong id="recCurrReading" contenteditable="true" class="dotted-val">-</strong></div>
+            <div>সাবেক রিডিংঃ <strong id="recPrevReading" contenteditable="true" class="dotted-val">-</strong></div>
+            <div>ব্যবহৃত রিডিংঃ <strong id="recUsedUnits" contenteditable="true" class="dotted-val">-</strong></div>
+          </div>
+
+          <div class="receipt-dotted-row" style="margin-top: 6px;">
+            <div style="flex: 1;">সার্ভিস চার্জঃ <strong id="recServiceCharge" contenteditable="true" class="dotted-val">৳০</strong></div>
+            <div style="flex: 1;">সর্বমোট বিলঃ <strong id="recTotalBill" contenteditable="true" class="dotted-val" style="font-size: 15px; color: #1e3a8a;">-</strong></div>
+            <div style="flex: 1.2;">জরিমানা বিল (১০% সহ) মোটঃ <strong id="recLateBill" contenteditable="true" class="dotted-val" style="font-size: 15px; color: #dc2626;">-</strong></div>
+          </div>
+
+          <div class="receipt-red-notice-box" id="receiptNoticeBox" contenteditable="true" title="ক্লিক করে এডিট করুন">
+            * বিল পরিশোধের শেষ তারিখ ১০ তারিখ। ১০ তারিখের মধ্যে পরিশোধ করিতে না পারিলে ১০ তারিখের পর ১০% জরিমানাসহ পরিশোধ করিতে হইবে। অন্যথায় ১৫ তারিখের পর সংযোগ বিচ্ছিন্ন করা হইবে। পুনরায় সংযোগ নিতে হলে সংযোগ ফি দিতে হবে। * কোন প্রকার জেঃ ও বিঃ লাইনে চুরি ধরা পড়িলে কর্তৃপক্ষের সিদ্ধান্ত মেনে নিতে হবে।
+          </div>
+
+          <div class="receipt-bottom-footer">
+            <div class="receipt-sign-col">
+              <div class="sign-dotted-line" id="receiptSignLeft" contenteditable="true">ভাড়াটিয়ার স্বাক্ষর</div>
+            </div>
+            <div class="receipt-quote-col" id="receiptQuoteText" contenteditable="true">
+              "মানুষের বিবেকই সবচাইতে বড় আদালত"
+            </div>
+            <div class="receipt-sign-col">
+              <div class="sign-dotted-line" id="receiptSignRight" contenteditable="true">আদায়কারীর স্বাক্ষর</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer no-print">
+          <button type="button" id="btnDownloadReceiptPDF" class="btn-primary" style="background: #dc2626; justify-content: center; font-size: 14px; font-weight: 800; width: 100%; padding: 13px 16px; border-radius: 8px;">
+            <i data-lucide="file-down" style="width: 20px; height: 20px;"></i>
+            📥 PDF ডাউনলোড করুন
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL 5: জিমেইল ক্লাউড ব্যাকআপ -->
+    <!-- ========================================== -->
+    <div id="gmailBackupModal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">☁️ জিমেইল ক্লাউড ব্যাকআপ</h2>
+          <button type="button" class="btn-close-modal" id="btnCloseGmailModal">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+
+        <div style="padding: 10px 0;">
+          <div style="background: #eff6ff; border: 1.5px solid #93c5fd; border-radius: 12px; padding: 12px; margin-bottom: 14px;">
+            <div style="font-weight: 700; color: #1e3a8a; margin-bottom: 4px;">Gmail দিয়ে ব্যাকআপ ও রিস্টোর:</div>
+            <p style="font-size: 12.5px; color: #334155; line-height: 1.4;">
+              Gmail আইডি দিয়ে ব্যাকআপ রাখলে অ্যাপ কখনো আনইনস্টল হয়ে গেলেও ওই Gmail দিলেই সমস্ত হিসাব ফিরে পাবেন।
+            </p>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">আপনার Gmail আইডি লিখুন *</label>
+            <input type="email" id="gmailAccountInput" class="form-input" placeholder="example@gmail.com" style="font-weight: 700;">
+          </div>
+
+          <div class="form-group" id="savedGmailsGroup" style="display: none;">
+            <label class="form-label">পূর্বে ব্যবহৃত Gmail সমূহ:</label>
+            <select id="savedGmailsSelect" class="form-select"></select>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 16px;">
+            <button type="button" id="btnUploadGmailBackup" class="btn-primary" style="justify-content: center; background: #0284c7;">
+              <i data-lucide="cloud-upload"></i>
+              জিমেইলে ব্যাকআপ রাখুন (Upload)
+            </button>
+            <button type="button" id="btnDownloadGmailBackup" class="btn-secondary" style="justify-content: center; border-color: #0284c7; color: #0284c7;">
+              <i data-lucide="cloud-download"></i>
+              জিমেইল থেকে ডাটা ফিরিয়ে আনুন (Restore)
+            </button>
+          </div>
+
+          <div id="gmailStatusMessage" style="margin-top: 12px; font-size: 13px; text-align: center; display: none; padding: 10px; border-radius: 8px;"></div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" id="btnCloseGmailModalBtn" class="btn-secondary" style="flex: 1;">বন্ধ করুন</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL 6: অটো রোল-ওভার -->
+    <!-- ========================================== -->
+    <div id="rolloverModal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">পরবর্তী মাসের অটো রোল-ওভার</h2>
+          <button type="button" class="btn-close-modal" id="btnCloseRolloverModal">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+
+        <div style="padding: 10px 0;">
+          <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 12px; margin-bottom: 14px;">
+            <div style="font-weight: 700; color: #1e3a8a; margin-bottom: 4px;">🔄 অটোমেটিক রোল-ওভার:</div>
+            <p style="font-size: 12.5px; color: #334155; line-height: 1.5;">
+              বর্তমান মাসের <strong>বর্তমান রিডিং</strong> পরবর্তী মাসের <strong>সাবেক রিডিং</strong> হয়ে যাবে। নাম ও রুম নম্বর অপরিবর্তিত থাকবে।
+            </p>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">পরবর্তী মাস নির্বাচন করুন:</label>
+            <input type="month" id="rolloverTargetMonth" class="form-input" style="font-weight: 700; font-size: 16px;">
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" id="btnCancelRollover" class="btn-secondary" style="flex: 1;">বাতিল</button>
+          <button type="button" id="btnConfirmRollover" class="btn-primary" style="flex: 1;">
+            <i data-lucide="arrow-right-circle"></i>
+            শুরু করুন
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL 7: সেটিংস ও টাওয়ার নাম -->
+    <!-- ========================================== -->
+    <div id="settingsModal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">সেটিংস ও তথ্য</h2>
+          <button type="button" class="btn-close-modal" id="btnCloseSettingsModal">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+
+        <form id="settingsForm">
+          <div class="form-section-title">ভবন ও রশিদের মূল তথ্য</div>
+          <div class="form-group">
+            <label class="form-label">ভবন / টাওয়ারের নাম</label>
+            <input type="text" id="settingHouseName" class="form-input" value="সম্রাট শাহজাহান টাওয়ার">
+          </div>
+          <div class="form-group">
+            <label class="form-label">রশিদের মোবাইল নম্বরসমূহ</label>
+            <input type="text" id="settingPhoneNumbers" class="form-input" value="01614-055666, 01774-151202, 01980-000712">
+          </div>
+          <div class="form-grid-3" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+            <div class="form-group">
+              <label class="form-label" style="font-weight: 700; color: #1e3a8a;">বিদ্যুৎ ইউনিট রেট (৳) *</label>
+              <input type="number" step="0.1" id="settingUnitRate" class="form-input" value="8.5" style="font-weight: 700;">
+            </div>
+            <div class="form-group">
+              <label class="form-label">ডিফল্ট সার্ভিস চার্জ (৳)</label>
+              <input type="number" step="1" id="settingDefaultServiceCharge" class="form-input" value="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">জরিমানা শুরুর দিন</label>
+              <input type="number" min="1" max="28" id="settingDueDateDay" class="form-input" value="10">
+            </div>
+          </div>
+
+          <div class="form-section-title">রশিদের অন্যান্য টেক্সট কাস্টমাইজেশন</div>
+          <div class="form-group">
+            <label class="form-label">রশিদের শীর্ষে লেখা (Prayer / Top Text)</label>
+            <input type="text" id="settingReceiptBismillah" class="form-input" value="বিসমিল্লাহির রাহমানির রাহিম">
+          </div>
+          <div class="form-group">
+            <label class="form-label">রশিদের লাল বক্সের নোটিশ / নিয়মাবলী</label>
+            <textarea id="settingReceiptNotice" class="form-textarea" rows="3">* বিল পরিশোধের শেষ তারিখ ১০ তারিখ। ১০ তারিখের মধ্যে পরিশোধ করিতে না পারিলে ১০ তারিখের পর ১০% জরিমানাসহ পরিশোধ করিতে হইবে। অন্যথায় ১৫ তারিখের পর সংযোগ বিচ্ছিন্ন করা হইবে। পুনরায় সংযোগ নিতে হলে সংযোগ ফি দিতে হবে। * কোন প্রকার জেঃ ও বিঃ লাইনে চুরি ধরা পড়িলে কর্তৃপক্ষের সিদ্ধান্ত মেনে নিতে হবে।</textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">নিচের নীতিবাক্য / বাণী (Bottom Quote)</label>
+            <input type="text" id="settingReceiptQuote" class="form-input" value='"মানুষের বিবেকই সবচাইতে বড় আদালত"'>
+          </div>
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">বাম স্বাক্ষর পদবী</label>
+              <input type="text" id="settingSignLeft" class="form-input" value="ভাড়াটিয়ার স্বাক্ষর">
+            </div>
+            <div class="form-group">
+              <label class="form-label">ডান স্বাক্ষর পদবী</label>
+              <input type="text" id="settingSignRight" class="form-input" value="আদায়কারীর স্বাক্ষর">
+            </div>
+          </div>
+
+          <div class="form-section-title">ডাটা এক্সপোর্ট</div>
+          <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px;">
+            <button type="button" id="btnExportJSON" class="btn-secondary" style="justify-content: flex-start;">
+              <i data-lucide="download"></i>
+              সব ডাটা ডাউনলোড (JSON Backup)
+            </button>
+            <button type="button" id="btnExportAllCSV" class="btn-secondary" style="justify-content: flex-start;">
+              <i data-lucide="file-spreadsheet"></i>
+              এক্সেল শিট ডাউনলোড (CSV)
+            </button>
+            <button type="button" id="btnLoadDemoData" class="btn-secondary" style="justify-content: flex-start; color: #2563eb;">
+              <i data-lucide="sparkles"></i>
+              নমুনা (Demo) ডাটা লোড করুন
+            </button>
+          </div>
+
+          <div class="modal-footer">
+            <button type="submit" class="btn-primary" style="flex: 1;">
+              <i data-lucide="check"></i>
+              সেভ করুন
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL 8: অ্যাপ থেকে বের হওয়ার ক্লিন কনফার্মেশন -->
+    <!-- ========================================== -->
+    <div id="exitAppModal" class="modal-overlay" style="align-items: center;">
+      <div class="exit-dialog-box">
+        <div class="exit-dialog-icon">
+          <i data-lucide="log-out"></i>
+        </div>
+        <h3 class="exit-dialog-title">অ্যাপ থেকে বের হবেন?</h3>
+        <p class="exit-dialog-text">আপনি কি নিশ্চিতভাবে অ্যাপ থেকে বের হতে চান?</p>
+        <div class="exit-dialog-actions">
+          <button type="button" id="btnCancelExitApp" class="btn-secondary" style="justify-content: center;">না</button>
+          <button type="button" id="btnConfirmExitApp" class="btn-primary" style="background: #dc2626; justify-content: center;">হ্যাঁ, বের হন</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

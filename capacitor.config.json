@@ -1,0 +1,9 @@
+﻿{
+  "appId": "com.samrat.barivara",
+  "appName": "স্মার্ট বিলিং ও বাড়ি ভাড়া",
+  "webDir": ".",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
+}

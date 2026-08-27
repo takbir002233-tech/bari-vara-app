@@ -1,0 +1,16 @@
+﻿{
+  "name": "bari-vara-billing-app",
+  "version": "1.0.0",
+  "description": "Smart Billing & Tenant Ledger App",
+  "main": "index.html",
+  "scripts": {
+    "build": "echo 'Assets ready'"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/core": "^6.1.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.1.2"
+  }
+}

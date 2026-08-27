@@ -1,0 +1,25 @@
+{
+  "name": "বাড়িভাড়া ও বিদ্যুৎ বিল ম্যানেজার",
+  "short_name": "বাড়িভাড়া",
+  "description": "বাড়িভাড়া, মিটার রিডিং ও বিদ্যুৎ বিল হিসাবের সহজ অফলাইন অ্যাপ",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0f172a",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

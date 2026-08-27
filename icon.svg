@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e3a8a" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+    <linearGradient id="bolt" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#facc15" />
+      <stop offset="100%" stop-color="#ea580c" />
+    </linearGradient>
+    <linearGradient id="roof" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#2563eb" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background Rounded Squircle -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  
+  <!-- House Roof -->
+  <path d="M256 90 L80 230 L115 258 L256 145 L397 258 L432 230 Z" fill="url(#roof)" filter="drop-shadow(0 8px 16px rgba(0,0,0,0.3))"/>
+  
+  <!-- House Body -->
+  <rect x="130" y="235" width="252" height="195" rx="20" fill="#ffffff" fill-opacity="0.08" stroke="#38bdf8" stroke-width="8"/>
+  
+  <!-- Door / Gauge Frame -->
+  <rect x="195" y="275" width="122" height="155" rx="16" fill="#1e293b" stroke="#60a5fa" stroke-width="4"/>
+  
+  <!-- Electricity Meter Screen in Door -->
+  <rect x="210" y="295" width="92" height="42" rx="8" fill="#0284c7"/>
+  <text x="256" y="324" font-family="monospace, sans-serif" font-size="20" font-weight="bold" fill="#ffffff" text-anchor="middle">0285.4</text>
+  
+  <!-- Lightning Bolt (Electric Icon) -->
+  <path d="M272 170 L215 260 L250 260 L240 330 L297 240 L262 240 Z" fill="url(#bolt)" filter="drop-shadow(0 4px 8px rgba(250,204,21,0.5))"/>
+  
+  <!-- Badge / Bangla Text Decor -->
+  <circle cx="390" cy="140" r="42" fill="#10b981" />
+  <text x="390" y="152" font-family="'Segoe UI', sans-serif" font-size="34" font-weight="900" fill="#ffffff" text-anchor="middle">৳</text>
+</svg>
