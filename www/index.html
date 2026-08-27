@@ -23,8 +23,32 @@
     <header class="app-header">
       <div class="header-top">
         <div class="brand-info">
-          <div class="brand-icon" style="padding: 0; background: transparent; display: flex; align-items: center; justify-content: center;">
-            <img src="icon.svg" alt="App Logo" style="width: 42px; height: 42px; border-radius: 10px; box-shadow: 0 3px 8px rgba(0,0,0,0.25); display: block;">
+          <div class="brand-icon" style="padding: 0; background: transparent; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" style="width: 44px; height: 44px; border-radius: 11px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: block;">
+              <defs>
+                <linearGradient id="bgHdr" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#1e3a8a" />
+                  <stop offset="100%" stop-color="#0f172a" />
+                </linearGradient>
+                <linearGradient id="boltHdr" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#facc15" />
+                  <stop offset="100%" stop-color="#ea580c" />
+                </linearGradient>
+                <linearGradient id="roofHdr" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#38bdf8" />
+                  <stop offset="100%" stop-color="#2563eb" />
+                </linearGradient>
+              </defs>
+              <rect width="512" height="512" rx="112" fill="url(#bgHdr)"/>
+              <path d="M256 90 L80 230 L115 258 L256 145 L397 258 L432 230 Z" fill="url(#roofHdr)"/>
+              <rect x="130" y="235" width="252" height="195" rx="20" fill="#ffffff" fill-opacity="0.08" stroke="#38bdf8" stroke-width="8"/>
+              <rect x="195" y="275" width="122" height="155" rx="16" fill="#1e293b" stroke="#60a5fa" stroke-width="4"/>
+              <rect x="210" y="295" width="92" height="42" rx="8" fill="#0284c7"/>
+              <text x="256" y="324" font-family="monospace, sans-serif" font-size="20" font-weight="bold" fill="#ffffff" text-anchor="middle">0285.4</text>
+              <path d="M272 170 L215 260 L250 260 L240 330 L297 240 L262 240 Z" fill="url(#boltHdr)"/>
+              <circle cx="390" cy="140" r="42" fill="#10b981" />
+              <text x="390" y="152" font-family="'Segoe UI', sans-serif" font-size="34" font-weight="900" fill="#ffffff" text-anchor="middle">৳</text>
+            </svg>
           </div>
           <div class="brand-text">
             <h1 id="headerHouseName">সম্রাট শাহজাহান টাওয়ার</h1>
@@ -62,23 +86,10 @@
     <!-- Main Content Area -->
     <main class="main-content">
       
-      <!-- Overdue Alert Banner -->
-      <div id="overdueAlertBanner" class="alert-banner" style="display: none;">
-        <i data-lucide="alert-triangle"></i>
-        <div>
-          <strong>সতর্কতা:</strong> চলতি মাসের ১০ তারিখ পার হয়েছে! ১০% জরিমানাসহ বকেয়া লাল চিহ্নিত করা হয়েছে।
-        </div>
-      </div>
-
       <!-- ================================================================= -->
       <!-- PAGE 0: প্রথম পেজ (হোম / ৩টি প্রধান মেন্যু কার্ড)                 -->
       <!-- ================================================================= -->
       <section id="pageHome" class="app-page active">
-        <div class="home-welcome-card">
-          <div style="font-size: 13px; font-weight: 700; color: #1e3a8a; margin-bottom: 4px;">স্বাগতম! হিসাব দেখতে নিচের যেকোনো অপশনে চাপ দিন:</div>
-          <div style="font-size: 11.5px; color: #64748b;">বিদ্যুৎ বিল, বাসা ভাড়া বা আয়-ব্যয়ের হিসাব দেখতে সংশ্লিষ্ট মেন্যুতে যান।</div>
-        </div>
-
         <div class="home-menu-grid">
           
           <!-- Card 1: মোট আয়-ব্যয় -->
@@ -193,10 +204,6 @@
             <i data-lucide="plus-circle" style="width: 18px; height: 18px;"></i>
             ➕ নতুন বিদ্যুৎ রিডিং এন্ট্রি
           </button>
-          <button id="btnOpenElecSettings" class="btn-secondary" style="color: #1e3a8a; border-color: #93c5fd; background: #eff6ff; font-weight: 700;">
-            <i data-lucide="settings"></i>
-            ⚙️ ইউনিট রেট (<span id="elecCurrentUnitRateDisplay">৳৮.৫</span>)
-          </button>
           <button id="btnOpenRolloverModal" class="btn-secondary">
             <i data-lucide="repeat"></i>
             পরবর্তী মাস তৈরি
@@ -217,12 +224,13 @@
             <thead>
               <tr>
                 <th style="width: 55px;">রুম নং</th>
-                <th style="width: 75px;">তারিখ</th>
+                <th style="width: 100px;">ভাড়াটিয়ার নাম</th>
                 <th>বর্তমান রিডিং</th>
                 <th>সাবেক রিডিং</th>
                 <th>ব্যবহৃত রিডিং</th>
-                <th style="width: 80px;">সার্ভিস চার্জ</th>
+                <th style="width: 75px;">সার্ভিস চার্জ</th>
                 <th>টাকা (৳)</th>
+                <th style="width: 80px;">স্ট্যাটাস</th>
                 <th class="no-print" style="width: 110px;">অ্যাকশন</th>
               </tr>
             </thead>
@@ -235,6 +243,7 @@
                 <td id="electricFootTotalUnits" style="font-weight: 800; color: #2563eb;">০</td>
                 <td id="electricFootTotalService" style="font-weight: 800; color: #d97706;">৳০</td>
                 <td id="electricFootTotalAmount" style="font-weight: 800; color: #15803d;">৳০</td>
+                <td></td>
                 <td class="no-print"></td>
               </tr>
             </tfoot>
@@ -269,11 +278,15 @@
           </div>
         </div>
 
-        <!-- Action Row (Prominent Add New Button) -->
-        <div class="action-buttons-row" style="margin-bottom: 10px;">
+        <!-- Action Row (Prominent Add New Button & Rent Rollover) -->
+        <div class="action-buttons-row" style="margin-bottom: 10px; flex-wrap: wrap;">
           <button id="btnOpenAddRentModal" class="btn-primary" style="background: #059669; font-size: 13px; font-weight: 800; padding: 10px 14px;">
             <i data-lucide="plus-circle" style="width: 18px; height: 18px;"></i>
             ➕ নতুন ভাড়া এন্ট্রি
+          </button>
+          <button id="btnOpenRentRolloverModal" class="btn-secondary" style="border-color: #a7f3d0; color: #047857; background: #f0fdf4;">
+            <i data-lucide="repeat"></i>
+            পরবর্তী মাস তৈরি
           </button>
           <button id="btnPrintRentSheet" class="btn-secondary">
             <i data-lucide="printer"></i>
@@ -613,8 +626,12 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label">বিবরণ * (একই তারিখে একাধিক বিবরণ দেওয়া যাবে)</label>
-            <input type="text" id="ledgerDescription" class="form-input" placeholder="যেমন: রুম ১০১ ভাড়া, পাম্প মেরামত, ঝাড়ুদার..." required>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <label class="form-label" style="margin-bottom: 0;">বিবরণ * (দ্রুত সিলেক্ট করুন বা লিখুন)</label>
+            </div>
+            <div id="ledgerPresetChips" style="display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px;"></div>
+            <input type="text" id="ledgerDescription" class="form-input" list="ledgerPresetsList" placeholder="যেমন: রুম ১০১ ভাড়া, পাম্প মেরামত, ঝাড়ুদার..." required>
+            <datalist id="ledgerPresetsList"></datalist>
           </div>
 
           <div class="form-group">
@@ -637,7 +654,7 @@
     </div>
 
     <!-- ========================================== -->
-    <!-- MODAL 4: কাগজের রশিদের হুবহু ভাউচার (PDF) -->
+    <!-- MODAL 4: কাগজের রশিদের হুবহু ভাউচার (PDF & Photo) -->
     <!-- ========================================== -->
     <div id="receiptModal" class="modal-overlay">
       <div class="modal-content" style="max-width: 640px;">
@@ -700,10 +717,23 @@
           </div>
         </div>
 
-        <div class="modal-footer no-print">
+        <!-- Direct Long-Press Image Preview Box -->
+        <div id="receiptImagePreviewContainer" class="no-print" style="margin-top: 12px; background: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 10px; padding: 10px; text-align: center;">
+          <div style="font-size: 12px; font-weight: 700; color: #1e3a8a; margin-bottom: 6px; display: flex; align-items: center; justify-content: center; gap: 4px;">
+            <i data-lucide="image" style="width: 15px; height: 15px;"></i>
+            <span>📸 রশিদের ছবি (নিচে ছবিতে চেপে ধরে রাখুন ➔ 'Download image' চাপুন বা স্ক্রিনশট নিন)</span>
+          </div>
+          <img id="receiptImageMemoPreview" alt="রশিদ ছবি" style="width: 100%; max-width: 580px; height: auto; border-radius: 8px; border: 1px solid #e2e8f0; display: block; margin: 0 auto; box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
+          <button type="button" id="btnDownloadReceiptImage" class="btn-secondary" style="margin-top: 8px; width: 100%; justify-content: center; font-size: 13px; font-weight: 700; color: #15803d; border-color: #86efac; background: #f0fdf4;">
+            <i data-lucide="download"></i>
+            📥 রশিদের ছবি (HD Photo) সরাসরি ডাউনলোড
+          </button>
+        </div>
+
+        <div class="modal-footer no-print" style="margin-top: 10px;">
           <button type="button" id="btnDownloadReceiptPDF" class="btn-primary" style="background: #dc2626; justify-content: center; font-size: 14px; font-weight: 800; width: 100%; padding: 13px 16px; border-radius: 8px;">
-            <i data-lucide="file-down" style="width: 20px; height: 20px;"></i>
-            📥 PDF ডাউনলোড করুন
+            <i data-lucide="printer" style="width: 20px; height: 20px;"></i>
+            🖨️ PDF ডাউনলোড / সেভ করুন (প্রিন্ট স্পুলার)
           </button>
         </div>
       </div>
@@ -817,11 +847,7 @@
             <label class="form-label">রশিদের মোবাইল নম্বরসমূহ</label>
             <input type="text" id="settingPhoneNumbers" class="form-input" value="01614-055666, 01774-151202, 01980-000712">
           </div>
-          <div class="form-grid-3" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
-            <div class="form-group">
-              <label class="form-label" style="font-weight: 700; color: #1e3a8a;">বিদ্যুৎ ইউনিট রেট (৳) *</label>
-              <input type="number" step="0.1" id="settingUnitRate" class="form-input" value="8.5" style="font-weight: 700;">
-            </div>
+          <div class="form-grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
             <div class="form-group">
               <label class="form-label">ডিফল্ট সার্ভিস চার্জ (৳)</label>
               <input type="number" step="1" id="settingDefaultServiceCharge" class="form-input" value="0">
@@ -830,6 +856,11 @@
               <label class="form-label">জরিমানা শুরুর দিন</label>
               <input type="number" min="1" max="28" id="settingDueDateDay" class="form-input" value="10">
             </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">ডিফল্ট আয়-ব্যয়ের বিবরণ তালিকা / প্রিসেট (কমা দিয়ে লিখুন)</label>
+            <textarea id="settingLedgerPresets" class="form-textarea" rows="2" placeholder="রুম ভাড়া আদায়, বিদ্যুৎ বিল জমা, পাম্প মেরামত, ঝাড়ুদার বিল, কেয়ারটেকার বেতন, অন্যান্য..."></textarea>
           </div>
 
           <div class="form-section-title">রশিদের অন্যান্য টেক্সট কাস্টমাইজেশন</div>
@@ -899,8 +930,44 @@
       </div>
     </div>
 
+    <!-- ========================================== -->
+    <!-- MODAL 9: ভাড়াটিয়ার নোট ও বিস্তারিত বিবরণ -->
+    <!-- ========================================== -->
+    <div id="tenantNoteModal" class="modal-overlay">
+      <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+          <h2 class="modal-title" id="tenantNoteModalTitle">ভাড়াটিয়ার নোট ও তথ্য</h2>
+          <button type="button" class="btn-close-modal" id="btnCloseTenantNoteModal">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <div style="padding: 10px 0;">
+          <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 10px; margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; font-weight: 700; color: #15803d; margin-bottom: 4px;">
+              <span>রুম নং: <strong id="noteModalRoom">-</strong></span>
+              <span>ভাড়া: <strong id="noteModalRent">৳০</strong></span>
+            </div>
+            <div style="font-size: 13px; color: #1e3a8a;">ভাড়াটিয়া: <strong id="noteModalTenant">-</strong></div>
+          </div>
+          <input type="hidden" id="tenantNoteTenantId">
+          <div class="form-group">
+            <label class="form-label">ভাড়াটিয়ার বিস্তারিত নোট ও তথ্য (যেমন: মোবাইল, জাতীয় পরিচয়পত্র, অগ্রিম টাকা ইত্যাদি)</label>
+            <textarea id="tenantNoteText" class="form-textarea" rows="5" placeholder="যেমন: অগ্রিম ২০,০০০৳ জমা আছে। এনআইডি নং: ১২৩৪৫৬৭৮৯০, ফ্যামিলি মেম্বার ৪ জন..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" id="btnCloseTenantNoteBtn" class="btn-secondary" style="flex: 1;">বন্ধ করুন</button>
+          <button type="button" id="btnSaveTenantNote" class="btn-primary" style="flex: 1; background: #059669;">
+            <i data-lucide="check"></i>
+            নোট সেভ করুন
+          </button>
+        </div>
+      </div>
+    </div>
+
   </div>
 
+  <script src="html2pdf.bundle.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

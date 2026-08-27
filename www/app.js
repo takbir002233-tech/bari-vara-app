@@ -65,10 +65,13 @@ let appSettings = {
   receiptQuote: '"মানুষের বিবেকই সবচাইতে বড় আদালত"',
   signLeft: 'ভাড়াটিয়ার স্বাক্ষর',
   signRight: 'আদায়কারীর স্বাক্ষর',
-  unitRate: 8.5,
   defaultServiceCharge: 0,
   dueDateDay: 10,
-  currency: '৳'
+  currency: '৳',
+  ledgerPresetCategories: [
+    'রুম ভাড়া আদায়', 'বিদ্যুৎ বিল জমা', 'পাম্প মেরামত', 'ঝাড়ুদার বিল',
+    'কেয়ারটেকার বেতন', 'জেনারেটর ফুয়েল', 'ইন্টারনেট বিল', 'রং ও মেরামত', 'পৌরসভা কর', 'অন্যান্য'
+  ]
 };
 
 let electricMonthsData = {};
@@ -91,6 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initLucide();
   setupMonthSelector();
   setupEventListeners();
+  renderLedgerPresetChips();
   renderCurrentPage();
   updateGmailBadgeUI();
   setupAndroidBackButtonHandler();
@@ -489,14 +493,20 @@ function renderElectricPage() {
       const tr = document.createElement('tr');
       if (isOverdue) tr.className = 'row-overdue-unpaid';
 
+      const isPaid = t.status === 'paid';
+      const statusBadge = isPaid
+        ? `<button type="button" class="btn-toggle-elec-status" data-id="${t.id}" style="border: 1px solid #86efac; background: #f0fdf4; color: #15803d; border-radius: 6px; padding: 3px 6px; font-size: 11px; font-weight: 700; cursor: pointer;" title="ক্লিক করে বকেয়া করুন">পরিশোধিত ✔</button>`
+        : `<button type="button" class="btn-toggle-elec-status" data-id="${t.id}" style="border: 1px solid #fca5a5; background: #fff1f2; color: #b91c1c; border-radius: 6px; padding: 3px 6px; font-size: 11px; font-weight: 700; cursor: pointer;" title="ক্লিক করে পরিশোধিত করুন">বকেয়া ⏳</button>`;
+
       tr.innerHTML = `
         <td style="font-weight: 800;">${t.roomNo}</td>
-        <td>${formatBnDate(t.date || getTodayDateStr())}</td>
+        <td style="font-weight: 600; color: #1e3a8a;">${t.tenantName || '-'}</td>
         <td style="font-weight: 700; color: #1e3a8a;">${toBn(t.currReading)}</td>
         <td style="color: #64748b;">${toBn(t.prevReading)}</td>
         <td style="font-weight: 800; color: #2563eb;">${toBn(t.usedUnits)}</td>
         <td style="font-weight: 700; color: #d97706;">${appSettings.currency}${toBnInt(t.serviceCharge || 0)}</td>
         <td style="font-weight: 800; color: #059669;">${appSettings.currency}${toBnInt(t.totalBill)}</td>
+        <td>${statusBadge}</td>
         <td class="no-print" style="white-space: nowrap;">
           <button type="button" class="btn-card-action btn-open-slip" data-id="${t.id}" style="color: #dc2626; display: inline-flex; align-items: center; gap: 2px; border: 1px solid #fca5a5; background: #fff5f5; border-radius: 6px; padding: 3px 5px; font-size: 11px; font-weight: 700; cursor: pointer;" title="রশিদ স্লিপ">
             <i data-lucide="file-text" style="width:12px;height:12px;"></i> রশিদ
@@ -509,6 +519,11 @@ function renderElectricPage() {
           </button>
         </td>
       `;
+
+      tr.querySelector('.btn-toggle-elec-status').addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleElectricStatus(t.id);
+      });
 
       // ONLY button clicks trigger actions - not entire row
       tr.querySelector('.btn-open-slip').addEventListener('click', (e) => {
@@ -537,10 +552,16 @@ function renderElectricPage() {
   if (footService) footService.textContent = `${appSettings.currency}${toBnInt(totalService)}`;
   if (footAmt) footAmt.textContent = `${appSettings.currency}${toBnInt(totalAmount)}`;
 
-  const rateBadge = document.getElementById('elecCurrentUnitRateDisplay');
-  if (rateBadge) rateBadge.textContent = `${appSettings.currency}${toBn(appSettings.unitRate || 8.5)}`;
-
   initLucide();
+}
+
+function toggleElectricStatus(id) {
+  const list = electricMonthsData[currentSelectedMonth] || [];
+  const t = list.find(x => x.id === id);
+  if (!t) return;
+  t.status = t.status === 'paid' ? 'unpaid' : 'paid';
+  saveAppState();
+  renderElectricPage();
 }
 
 function deleteElectricEntry(id) {
@@ -614,7 +635,11 @@ function renderRentPage() {
 
       tr.innerHTML = `
         <td style="font-weight: 800;">${t.roomNo}</td>
-        <td style="font-weight: 700; text-align: left; padding-left: 8px;">${t.tenantName}</td>
+        <td style="font-weight: 700; text-align: left; padding-left: 8px;">
+          <span class="btn-open-tenant-note" data-id="${t.id}" style="color: #1e3a8a; cursor: pointer; text-decoration: underline;" title="নোট ও বিস্তারিত তথ্য দেখতে চাপ দিন">
+            ${t.tenantName || '-'} 📝
+          </span>
+        </td>
         <td>${formatBnMonthYear(t.month || currentSelectedMonth)}</td>
         <td>${t.rentPaymentDate ? formatBnDate(t.rentPaymentDate) : '-'}</td>
         <td style="font-weight: 800; color: #059669;">${appSettings.currency}${toBnInt(t.rentHouseAmount)}</td>
@@ -632,6 +657,11 @@ function renderRentPage() {
           </button>
         </td>
       `;
+
+      tr.querySelector('.btn-open-tenant-note').addEventListener('click', (e) => {
+        e.stopPropagation();
+        openTenantNoteModal(t.id);
+      });
 
       tr.querySelector('.btn-toggle-rent-paid').addEventListener('click', (e) => {
         e.stopPropagation();
@@ -683,6 +713,79 @@ function toggleRentPayment(id) {
 
   saveAppState();
   renderRentPage();
+}
+
+// Tenant Note & Details Modal Functions
+function openTenantNoteModal(tenantId) {
+  const list = rentMonthsData[currentSelectedMonth] || [];
+  const t = list.find(x => x.id === tenantId);
+  if (!t) return;
+
+  document.getElementById('tenantNoteTenantId').value = t.id;
+  document.getElementById('noteModalRoom').textContent = t.roomNo || '-';
+  document.getElementById('noteModalRent').textContent = `${appSettings.currency}${toBnInt(t.rentHouseAmount || 0)}`;
+  document.getElementById('noteModalTenant').textContent = t.tenantName || '-';
+  document.getElementById('tenantNoteText').value = t.notes || '';
+
+  const modal = document.getElementById('tenantNoteModal');
+  if (modal) modal.classList.add('active');
+  initLucide();
+}
+
+function closeTenantNoteModal() {
+  const modal = document.getElementById('tenantNoteModal');
+  if (modal) modal.classList.remove('active');
+}
+
+function handleSaveTenantNote() {
+  const id = document.getElementById('tenantNoteTenantId').value;
+  const notes = document.getElementById('tenantNoteText').value.trim();
+  const list = rentMonthsData[currentSelectedMonth] || [];
+  const t = list.find(x => x.id === id);
+  if (t) {
+    t.notes = notes;
+    saveAppState();
+    closeTenantNoteModal();
+    renderRentPage();
+    alert('ভাড়াটিয়ার নোট সফলভাবে সংরক্ষিত হয়েছে!');
+  }
+}
+
+// Ledger Presets Renderer
+function renderLedgerPresetChips() {
+  const container = document.getElementById('ledgerPresetChips');
+  const datalist = document.getElementById('ledgerPresetsList');
+  if (!container || !datalist) return;
+
+  const presets = appSettings.ledgerPresetCategories || [
+    'রুম ভাড়া আদায়', 'বিদ্যুৎ বিল জমা', 'পাম্প মেরামত', 'ঝাড়ুদার বিল',
+    'কেয়ারটেকার বেতন', 'জেনারেটর ফুয়েল', 'ইন্টারনেট বিল', 'রং ও মেরামত', 'পৌরসভা কর', 'অন্যান্য'
+  ];
+
+  container.innerHTML = '';
+  datalist.innerHTML = '';
+
+  presets.forEach(preset => {
+    // 1. Clickable Badges / Chips
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'btn-preset-chip';
+    chip.textContent = preset;
+    chip.style.cssText = 'background: #f3e8ff; color: #6b21a8; border: 1px solid #d8b4fe; border-radius: 12px; padding: 2px 8px; font-size: 11px; font-weight: 600; cursor: pointer;';
+    chip.addEventListener('click', () => {
+      const descInput = document.getElementById('ledgerDescription');
+      if (descInput) {
+        descInput.value = preset;
+        descInput.focus();
+      }
+    });
+    container.appendChild(chip);
+
+    // 2. Datalist Options
+    const opt = document.createElement('option');
+    opt.value = preset;
+    datalist.appendChild(opt);
+  });
 }
 
 // =========================================================================
@@ -813,9 +916,126 @@ function deleteLedgerEntry(id) {
   }
 }
 
-// =========================================================================
-// MODALS LOGIC
-// =========================================================================
+// Room Data Auto-Lookup & Carryover Helpers
+function findLastRoomData(roomNo) {
+  if (!roomNo) return null;
+  const cleanRoom = roomNo.trim().toLowerCase();
+
+  // 1. Look in electric data across all months (latest first)
+  const months = Object.keys(electricMonthsData).sort().reverse();
+  for (const m of months) {
+    const list = electricMonthsData[m] || [];
+    const found = list.find(x => (x.roomNo || '').trim().toLowerCase() === cleanRoom);
+    if (found) {
+      return {
+        tenantName: found.tenantName || '',
+        prevReading: Number(found.currReading) || Number(found.prevReading) || 0,
+        serviceCharge: Number(found.serviceCharge) !== undefined ? Number(found.serviceCharge) : (appSettings.defaultServiceCharge || 0),
+        unitRate: Number(found.unitRate) || appSettings.unitRate || 8.5
+      };
+    }
+  }
+
+  // 2. Also look in rent data for tenant name
+  const rentMonths = Object.keys(rentMonthsData).sort().reverse();
+  for (const m of rentMonths) {
+    const list = rentMonthsData[m] || [];
+    const found = list.find(x => (x.roomNo || '').trim().toLowerCase() === cleanRoom);
+    if (found && found.tenantName) {
+      return {
+        tenantName: found.tenantName,
+        prevReading: 0,
+        serviceCharge: appSettings.defaultServiceCharge || 0,
+        unitRate: appSettings.unitRate || 8.5
+      };
+    }
+  }
+  return null;
+}
+
+function findLastRentRoomData(roomNo) {
+  if (!roomNo) return null;
+  const cleanRoom = roomNo.trim().toLowerCase();
+  const rentMonths = Object.keys(rentMonthsData).sort().reverse();
+  for (const m of rentMonths) {
+    const list = rentMonthsData[m] || [];
+    const found = list.find(x => (x.roomNo || '').trim().toLowerCase() === cleanRoom);
+    if (found) {
+      return {
+        tenantName: found.tenantName || '',
+        rentHouseAmount: found.rentHouseAmount || 0,
+        gasBill: found.gasBill || 0,
+        waterBill: found.waterBill || 0,
+        cleanerBill: found.cleanerBill || 0
+      };
+    }
+  }
+  return null;
+}
+
+// Automatic Carryover for Electricity and Rent to next month
+function ensureMonthDataCarriedOver(targetMonth) {
+  if (!targetMonth) return;
+
+  const [y, m] = targetMonth.split('-').map(Number);
+  const prevDate = new Date(y, m - 2, 1);
+  const prevYr = prevDate.getFullYear();
+  const prevMn = String(prevDate.getMonth() + 1).padStart(2, '0');
+  const prevMonthKey = `${prevYr}-${prevMn}`;
+
+  // 1. Auto-carryover Electricity (Current reading becomes Next month's Previous reading)
+  if ((!electricMonthsData[targetMonth] || electricMonthsData[targetMonth].length === 0) && electricMonthsData[prevMonthKey] && electricMonthsData[prevMonthKey].length > 0) {
+    const prevList = electricMonthsData[prevMonthKey];
+    electricMonthsData[targetMonth] = prevList.map(item => {
+      const prevReading = Number(item.currReading) || Number(item.prevReading) || 0;
+      const currReading = prevReading; // Starts equal to prev reading so 0 used units
+      const usedUnits = 0;
+      const unitRate = Number(item.unitRate) || appSettings.unitRate || 8.5;
+      const serviceCharge = Number(item.serviceCharge) !== undefined ? Number(item.serviceCharge) : (appSettings.defaultServiceCharge || 0);
+      const totalBill = serviceCharge;
+      return {
+        id: 'elec_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+        roomNo: item.roomNo,
+        tenantName: item.tenantName || '',
+        date: getTodayDateStr(),
+        prevReading: prevReading,
+        currReading: currReading,
+        usedUnits: usedUnits,
+        unitRate: unitRate,
+        serviceCharge: serviceCharge,
+        totalBill: totalBill,
+        status: 'unpaid'
+      };
+    });
+  }
+
+  // 2. Auto-carryover Rent (Room, Tenant Name, Rent Amount carry over)
+  if ((!rentMonthsData[targetMonth] || rentMonthsData[targetMonth].length === 0) && rentMonthsData[prevMonthKey] && rentMonthsData[prevMonthKey].length > 0) {
+    const prevRentList = rentMonthsData[prevMonthKey];
+    rentMonthsData[targetMonth] = prevRentList.map(item => {
+      const rentAmt = Number(item.rentHouseAmount) || 0;
+      const gas = Number(item.gasBill) || 0;
+      const water = Number(item.waterBill) || 0;
+      const cleaner = Number(item.cleanerBill) || 0;
+      const total = rentAmt + gas + water + cleaner;
+      return {
+        id: 'rent_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+        roomNo: item.roomNo,
+        tenantName: item.tenantName || '',
+        rentHouseAmount: rentAmt,
+        gasBill: gas,
+        waterBill: water,
+        cleanerBill: cleaner,
+        totalRentAmount: total,
+        status: 'unpaid',
+        month: targetMonth,
+        notes: item.notes || ''
+      };
+    });
+  }
+
+  saveAppState();
+}
 
 // 1. Electric Modal
 function openElectricModal(id) {
@@ -1080,6 +1300,16 @@ function openPaperReceiptModal(elecId) {
   document.getElementById('recTotalBill').textContent = `${appSettings.currency}${toBnInt(t.totalBill)}`;
   document.getElementById('recLateBill').textContent = `${appSettings.currency}${toBnInt(t.totalBill * 1.10)}`;
 
+  // Render HD Image memo preview for direct view & long-press download
+  try {
+    const canvas = drawReceiptMemoToCanvas(t);
+    const imgData = canvas.toDataURL('image/jpeg', 0.98);
+    const previewEl = document.getElementById('receiptImageMemoPreview');
+    if (previewEl) previewEl.src = imgData;
+  } catch (err) {
+    console.warn('Canvas memo preview error', err);
+  }
+
   const modal = document.getElementById('receiptModal');
   if (modal) modal.classList.add('active');
   initLucide();
@@ -1088,6 +1318,27 @@ function openPaperReceiptModal(elecId) {
 function closeReceiptModal() {
   const modal = document.getElementById('receiptModal');
   if (modal) modal.classList.remove('active');
+}
+
+function downloadReceiptImage() {
+  const room = activeReceiptItem ? (activeReceiptItem.roomNo || 'Room') : 'Room';
+  const month = currentSelectedMonth || 'Month';
+  const filename = `Electric_Bill_Room_${room}_${month}.jpg`;
+
+  try {
+    const canvas = drawReceiptMemoToCanvas(activeReceiptItem || {});
+    const imgData = canvas.toDataURL('image/jpeg', 0.98);
+    const a = document.createElement('a');
+    a.href = imgData;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      if (a.parentNode) a.parentNode.removeChild(a);
+    }, 2000);
+  } catch (err) {
+    console.error('Image download error', err);
+  }
 }
 
 function printReceiptDirect() {
@@ -1314,6 +1565,62 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
   ctx.fillText(line, x, y);
 }
 
+function createPurePdfBlobFromJpeg(jpegDataUrl) {
+  const base64 = jpegDataUrl.split(',')[1];
+  const binary = atob(base64);
+  const len = binary.length;
+  const buffer = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    buffer[i] = binary.charCodeAt(i);
+  }
+
+  // A5 Landscape dimensions in points: 595.28 x 419.53 (210 x 148 mm)
+  const pageWidth = 595.28;
+  const pageHeight = 419.53;
+  const margin = 16;
+  const imgWidth = pageWidth - (margin * 2);
+  const imgHeight = (800 / 1200) * imgWidth;
+  const xOffset = margin;
+  const yOffset = (pageHeight - imgHeight) / 2;
+
+  const header = `%PDF-1.4\n`;
+  const obj1 = `1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n`;
+  const obj2 = `2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n`;
+  const obj3 = `3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWidth.toFixed(2)} ${pageHeight.toFixed(2)}] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>\nendobj\n`;
+  const obj4Header = `4 0 obj\n<< /Type /XObject /Subtype /Image /Width 1200 /Height 800 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${len} >>\nstream\n`;
+  const obj4Footer = `\nendstream\nendobj\n`;
+  const contentStream = `q\n${imgWidth.toFixed(2)} 0 0 ${imgHeight.toFixed(2)} ${xOffset.toFixed(2)} ${yOffset.toFixed(2)} cm\n/Im0 Do\nQ`;
+  const obj5 = `5 0 obj\n<< /Length ${contentStream.length} >>\nstream\n${contentStream}\nendstream\nendobj\n`;
+
+  const encoder = new TextEncoder();
+  const hBytes = encoder.encode(header);
+  const o1Bytes = encoder.encode(obj1);
+  const o2Bytes = encoder.encode(obj2);
+  const o3Bytes = encoder.encode(obj3);
+  const o4hBytes = encoder.encode(obj4Header);
+  const o4fBytes = encoder.encode(obj4Footer);
+  const o5Bytes = encoder.encode(obj5);
+
+  let offset = 0;
+  offset += hBytes.length;
+  const o1 = offset; offset += o1Bytes.length;
+  const o2 = offset; offset += o2Bytes.length;
+  const o3 = offset; offset += o3Bytes.length;
+  const o4 = offset; offset += o4hBytes.length + len + o4fBytes.length;
+  const o5 = offset; offset += o5Bytes.length;
+  const xrefOffset = offset;
+
+  const xref = `xref\n0 6\n0000000000 65535 f \n${String(o1).padStart(10, '0')} 00000 n \n${String(o2).padStart(10, '0')} 00000 n \n${String(o3).padStart(10, '0')} 00000 n \n${String(o4).padStart(10, '0')} 00000 n \n${String(o5).padStart(10, '0')} 00000 n \n`;
+  const trailer = `trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`;
+
+  const xrefBytes = encoder.encode(xref);
+  const trailerBytes = encoder.encode(trailer);
+
+  return new Blob([
+    hBytes, o1Bytes, o2Bytes, o3Bytes, o4hBytes, buffer, o4fBytes, o5Bytes, xrefBytes, trailerBytes
+  ], { type: 'application/pdf' });
+}
+
 function downloadReceiptPDF() {
   const btn = document.getElementById('btnDownloadReceiptPDF');
   const originalText = btn ? btn.innerHTML : '';
@@ -1331,82 +1638,67 @@ function downloadReceiptPDF() {
     const canvas = drawReceiptMemoToCanvas(activeReceiptItem || {});
     const imgData = canvas.toDataURL('image/jpeg', 0.98);
 
+    // 1. Try jsPDF if available in environment
     const jsPdfClass = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
     if (jsPdfClass) {
-      const pdf = new jsPdfClass({
-        orientation: 'landscape',
-        unit: 'mm',
-        format: 'a5'
-      });
-
+      const pdf = new jsPdfClass({ orientation: 'landscape', unit: 'mm', format: 'a5' });
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       const margin = 6;
       const printWidth = pdfWidth - (margin * 2);
       const printHeight = (canvas.height * printWidth) / canvas.width;
       const yPos = (pdfHeight - printHeight) > 0 ? (pdfHeight - printHeight) / 2 : margin;
-
       pdf.addImage(imgData, 'JPEG', margin, yPos, printWidth, printHeight);
 
-      // 1. Direct Blob URL Download
-      const pdfBlob = pdf.output('blob');
+      try {
+        pdf.save(filename);
+      } catch (e) {}
+
+      try {
+        const pdfBlob = pdf.output('blob');
+        const blobUrl = URL.createObjectURL(pdfBlob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = blobUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          if (a.parentNode) a.parentNode.removeChild(a);
+          URL.revokeObjectURL(blobUrl);
+        }, 3000);
+      } catch (blobErr) {}
+    } else {
+      // 2. Direct 100% Dependency-Free Pure PDF Blob Generator
+      const pdfBlob = createPurePdfBlobFromJpeg(imgData);
       const blobUrl = URL.createObjectURL(pdfBlob);
       const a = document.createElement('a');
       a.style.display = 'none';
       a.href = blobUrl;
       a.download = filename;
-      a.setAttribute('download', filename);
       document.body.appendChild(a);
       a.click();
-
-      // 2. jsPDF native save fallback
-      try {
-        pdf.save(filename);
-      } catch (saveErr) {}
-
       setTimeout(() => {
         if (a.parentNode) a.parentNode.removeChild(a);
         URL.revokeObjectURL(blobUrl);
-      }, 5000);
-
-      if (btn) {
-        btn.innerHTML = '<i data-lucide="check"></i> PDF সেভ হয়েছে!';
-        initLucide();
-        setTimeout(() => {
-          if (btn) {
-            btn.innerHTML = originalText;
-            btn.disabled = false;
-            initLucide();
-          }
-        }, 2000);
-      }
-      return;
+      }, 3000);
     }
 
-    if (window.html2pdf) {
-      const origElement = document.getElementById('receiptPaperArea');
-      window.html2pdf().set({
-        margin: [4, 4, 4, 4],
-        filename: filename,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, logging: false },
-        jsPDF: { unit: 'mm', format: 'a5', orientation: 'landscape' }
-      }).from(origElement).save().then(() => {
+    if (btn) {
+      btn.innerHTML = '<i data-lucide="check"></i> PDF সেভ সম্পন্ন!';
+      initLucide();
+      setTimeout(() => {
         if (btn) {
           btn.innerHTML = originalText;
           btn.disabled = false;
           initLucide();
         }
-      });
-      return;
+      }, 2000);
     }
-
-    printReceiptDirect();
   } catch (err) {
     console.error('PDF error', err);
     printReceiptDirect();
-  } finally {
-    if (btn && btn.disabled) {
+    if (btn) {
       btn.innerHTML = originalText;
       btn.disabled = false;
       initLucide();
@@ -1643,9 +1935,9 @@ function handleConfirmRollover() {
 function openSettingsModal() {
   document.getElementById('settingHouseName').value = appSettings.houseName || '';
   document.getElementById('settingPhoneNumbers').value = appSettings.phoneNumbers || '';
-  document.getElementById('settingUnitRate').value = appSettings.unitRate || 8.5;
   document.getElementById('settingDefaultServiceCharge').value = appSettings.defaultServiceCharge !== undefined ? appSettings.defaultServiceCharge : 0;
   document.getElementById('settingDueDateDay').value = appSettings.dueDateDay || 10;
+  document.getElementById('settingLedgerPresets').value = (appSettings.ledgerPresetCategories || []).join(', ');
 
   // Custom receipt fields
   document.getElementById('settingReceiptBismillah').value = appSettings.receiptBismillah || 'বিসমিল্লাহির রাহমানির রাহিম';
@@ -1668,9 +1960,13 @@ function handleSettingsSubmit(e) {
   e.preventDefault();
   appSettings.houseName = document.getElementById('settingHouseName').value.trim() || 'সম্রাট শাহজাহান টাওয়ার';
   appSettings.phoneNumbers = document.getElementById('settingPhoneNumbers').value.trim() || '01614-055666';
-  appSettings.unitRate = parseFloat(document.getElementById('settingUnitRate').value) || 8.5;
   appSettings.defaultServiceCharge = parseFloat(document.getElementById('settingDefaultServiceCharge').value) || 0;
   appSettings.dueDateDay = parseInt(document.getElementById('settingDueDateDay').value, 10) || 10;
+
+  const rawPresets = document.getElementById('settingLedgerPresets').value;
+  if (rawPresets) {
+    appSettings.ledgerPresetCategories = rawPresets.split(',').map(s => s.trim()).filter(Boolean);
+  }
 
   appSettings.receiptBismillah = document.getElementById('settingReceiptBismillah').value.trim();
   appSettings.receiptNotice = document.getElementById('settingReceiptNotice').value.trim();
@@ -1680,9 +1976,10 @@ function handleSettingsSubmit(e) {
 
   document.getElementById('headerHouseName').textContent = appSettings.houseName;
   saveAppState();
+  renderLedgerPresetChips();
   closeSettingsModal();
   renderCurrentPage();
-  alert('সেটিংস ও রেট সফলভাবে সংরক্ষিত হয়েছে!');
+  alert('সেটিংস সফলভাবে সংরক্ষিত হয়েছে!');
 }
 
 function exportAllDataCSV() {
@@ -1841,6 +2138,8 @@ function shiftMonth(offset) {
   if (!electricMonthsData[target]) electricMonthsData[target] = [];
   if (!rentMonthsData[target]) rentMonthsData[target] = [];
 
+  ensureMonthDataCarriedOver(target);
+
   currentSelectedMonth = target;
   setupMonthSelector();
   renderCurrentPage();
@@ -1881,6 +2180,7 @@ function setupEventListeners() {
       currentSelectedMonth = e.target.value;
       if (!electricMonthsData[currentSelectedMonth]) electricMonthsData[currentSelectedMonth] = [];
       if (!rentMonthsData[currentSelectedMonth]) rentMonthsData[currentSelectedMonth] = [];
+      ensureMonthDataCarriedOver(currentSelectedMonth);
       renderCurrentPage();
     });
   }
@@ -1889,6 +2189,42 @@ function setupEventListeners() {
   const btnNextMonth = document.getElementById('btnNextMonth');
   if (btnPrevMonth) btnPrevMonth.addEventListener('click', () => shiftMonth(-1));
   if (btnNextMonth) btnNextMonth.addEventListener('click', () => shiftMonth(1));
+
+  // Room No Auto-Fill Listeners
+  const electricRoomInput = document.getElementById('electricRoomNo');
+  if (electricRoomInput) {
+    electricRoomInput.addEventListener('input', (e) => {
+      const isEdit = Boolean(document.getElementById('electricFormId').value);
+      if (!isEdit) {
+        const data = findLastRoomData(e.target.value);
+        if (data) {
+          const nameEl = document.getElementById('electricTenantName');
+          const prevEl = document.getElementById('electricPrevReading');
+          const srvEl = document.getElementById('electricServiceCharge');
+          if (nameEl && !nameEl.value) nameEl.value = data.tenantName;
+          if (prevEl && (prevEl.value === '0' || prevEl.value === '')) prevEl.value = data.prevReading;
+          if (srvEl && (srvEl.value === '0' || srvEl.value === '')) srvEl.value = data.serviceCharge;
+          calcElectricFormLive();
+        }
+      }
+    });
+  }
+
+  const rentRoomInput = document.getElementById('rentRoomNo');
+  if (rentRoomInput) {
+    rentRoomInput.addEventListener('input', (e) => {
+      const isEdit = Boolean(document.getElementById('rentFormId').value);
+      if (!isEdit) {
+        const data = findLastRentRoomData(e.target.value) || findLastRoomData(e.target.value);
+        if (data) {
+          const nameEl = document.getElementById('rentTenantName');
+          const rentEl = document.getElementById('rentHouseAmount');
+          if (nameEl && !nameEl.value) nameEl.value = data.tenantName;
+          if (rentEl && (rentEl.value === '0' || rentEl.value === '') && data.rentHouseAmount) rentEl.value = data.rentHouseAmount;
+        }
+      }
+    });
+  }
 
   // Search
   const electricSearch = document.getElementById('electricSearchInput');
@@ -2020,14 +2356,25 @@ function setupEventListeners() {
   const btnPrintRent = document.getElementById('btnPrintRentSheet');
   const btnPrintLedger = document.getElementById('btnPrintLedgerSheet');
   const btnDownloadRecPDF = document.getElementById('btnDownloadReceiptPDF');
+  const btnDownloadReceiptImg = document.getElementById('btnDownloadReceiptImage');
   const btnPrintRecDirect = document.getElementById('btnPrintReceiptDirect');
   const btnOpenRecSettings = document.getElementById('btnOpenReceiptSettings');
 
   if (btnPrintRent) btnPrintRent.addEventListener('click', () => window.print());
   if (btnPrintLedger) btnPrintLedger.addEventListener('click', () => window.print());
   if (btnDownloadRecPDF) btnDownloadRecPDF.addEventListener('click', downloadReceiptPDF);
+  if (btnDownloadReceiptImg) btnDownloadReceiptImg.addEventListener('click', downloadReceiptImage);
   if (btnPrintRecDirect) btnPrintRecDirect.addEventListener('click', printReceiptDirect);
   if (btnOpenRecSettings) btnOpenRecSettings.addEventListener('click', openSettingsModal);
+
+  // Tenant Note Modal Buttons
+  const btnCloseTenantNote = document.getElementById('btnCloseTenantNoteModal');
+  const btnCloseTenantNoteBtn = document.getElementById('btnCloseTenantNoteBtn');
+  const btnSaveTenantNote = document.getElementById('btnSaveTenantNote');
+
+  if (btnCloseTenantNote) btnCloseTenantNote.addEventListener('click', closeTenantNoteModal);
+  if (btnCloseTenantNoteBtn) btnCloseTenantNoteBtn.addEventListener('click', closeTenantNoteModal);
+  if (btnSaveTenantNote) btnSaveTenantNote.addEventListener('click', handleSaveTenantNote);
 
   // Live Inline Editing auto-saver on receipt
   const receiptEditableIds = [
@@ -2070,17 +2417,18 @@ function setupEventListeners() {
 
   // Rollover & Settings
   const btnOpenRollover = document.getElementById('btnOpenRolloverModal');
+  const btnOpenRentRollover = document.getElementById('btnOpenRentRolloverModal');
   const btnCloseRollover = document.getElementById('btnCloseRolloverModal');
   const btnCancelRollover = document.getElementById('btnCancelRollover');
   const btnConfirmRollover = document.getElementById('btnConfirmRollover');
 
   if (btnOpenRollover) btnOpenRollover.addEventListener('click', openRolloverModal);
+  if (btnOpenRentRollover) btnOpenRentRollover.addEventListener('click', openRolloverModal);
   if (btnCloseRollover) btnCloseRollover.addEventListener('click', closeRolloverModal);
   if (btnCancelRollover) btnCancelRollover.addEventListener('click', closeRolloverModal);
   if (btnConfirmRollover) btnConfirmRollover.addEventListener('click', handleConfirmRollover);
 
   const btnOpenSettings = document.getElementById('btnOpenSettings');
-  const btnOpenElecSettings = document.getElementById('btnOpenElecSettings');
   const btnCloseSettings = document.getElementById('btnCloseSettingsModal');
   const settingsForm = document.getElementById('settingsForm');
   const btnExportJSON = document.getElementById('btnExportJSON');
@@ -2088,7 +2436,6 @@ function setupEventListeners() {
   const btnLoadDemo = document.getElementById('btnLoadDemoData');
 
   if (btnOpenSettings) btnOpenSettings.addEventListener('click', openSettingsModal);
-  if (btnOpenElecSettings) btnOpenElecSettings.addEventListener('click', openSettingsModal);
   if (btnCloseSettings) btnCloseSettings.addEventListener('click', closeSettingsModal);
   if (settingsForm) settingsForm.addEventListener('submit', handleSettingsSubmit);
   if (btnExportJSON) btnExportJSON.addEventListener('click', exportJSONBackup);

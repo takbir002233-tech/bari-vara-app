@@ -927,14 +927,21 @@ input, button, select, textarea {
 
 /* Print CSS */
 @media print {
+  @page {
+    size: auto;
+    margin: 4mm;
+  }
   html, body {
     background: #ffffff !important;
     padding: 0 !important;
     margin: 0 !important;
     width: 100% !important;
+    max-width: 100% !important;
     color: #000000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
-  .app-header, .bottom-nav-bar, .action-buttons-row, .controls-bar, .fab-add, .btn-back-home, .no-print, .modal-header, .modal-footer {
+  .app-header, .bottom-nav-bar, .action-buttons-row, .controls-bar, .fab-add, .btn-back-home, .no-print, .modal-header, .modal-footer, .app-page {
     display: none !important;
   }
   .modal-overlay {
@@ -953,14 +960,30 @@ input, button, select, textarea {
     background: transparent !important;
   }
   .paper-receipt-container {
-    border: 2.5px solid #b91c1c !important;
+    border: 2px solid #b91c1c !important;
     background: #ffffff !important;
     width: 100% !important;
-    max-width: 680px !important;
-    margin: 10px auto !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    margin: 0 auto !important;
+    padding: 10px 14px !important;
     page-break-inside: avoid !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+  }
+  .receipt-title {
+    font-size: 18px !important;
+  }
+  .receipt-dotted-row {
+    font-size: 12px !important;
+  }
+  .receipt-red-notice-box {
+    font-size: 10.5px !important;
+    padding: 6px 8px !important;
+    line-height: 1.35 !important;
+  }
+  .receipt-quote-col {
+    font-size: 11px !important;
   }
 }
 
