@@ -1318,7 +1318,7 @@ function downloadReceiptPDF() {
   const btn = document.getElementById('btnDownloadReceiptPDF');
   const originalText = btn ? btn.innerHTML : '';
   if (btn) {
-    btn.innerHTML = '<i data-lucide="loader"></i> PDF নামছে...';
+    btn.innerHTML = '<i data-lucide="loader"></i> PDF তৈরি হচ্ছে...';
     btn.disabled = true;
     initLucide();
   }
@@ -1348,54 +1348,65 @@ function downloadReceiptPDF() {
 
       pdf.addImage(imgData, 'JPEG', margin, yPos, printWidth, printHeight);
 
-      // 1. Data URI Download (works natively on mobile & webviews)
-      try {
-        const dataUri = pdf.output('datauristring');
-        const dlLink = document.createElement('a');
-        dlLink.href = dataUri;
-        dlLink.download = filename;
-        dlLink.setAttribute('download', filename);
-        document.body.appendChild(dlLink);
-        dlLink.click();
-        setTimeout(() => {
-          if (dlLink.parentNode) dlLink.parentNode.removeChild(dlLink);
-        }, 1500);
-      } catch (e) {
-        console.warn('Data URI download', e);
-      }
+      // 1. Direct Blob URL Download
+      const pdfBlob = pdf.output('blob');
+      const blobUrl = URL.createObjectURL(pdfBlob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = blobUrl;
+      a.download = filename;
+      a.setAttribute('download', filename);
+      document.body.appendChild(a);
+      a.click();
 
-      // 2. Blob URL Download
-      try {
-        const pdfBlob = pdf.output('blob');
-        const blobUrl = URL.createObjectURL(new Blob([pdfBlob], { type: 'application/pdf' }));
-        const a = document.createElement('a');
-        a.href = blobUrl;
-        a.download = filename;
-        a.setAttribute('download', filename);
-        a.style.display = 'none';
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => {
-          if (a.parentNode) a.parentNode.removeChild(a);
-          URL.revokeObjectURL(blobUrl);
-        }, 3000);
-      } catch (e) {
-        console.warn('Blob URL download', e);
-      }
-
-      // 3. Native save call
+      // 2. jsPDF native save fallback
       try {
         pdf.save(filename);
-      } catch (e) {}
+      } catch (saveErr) {}
 
-    } else {
-      printReceiptDirect();
+      setTimeout(() => {
+        if (a.parentNode) a.parentNode.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+      }, 5000);
+
+      if (btn) {
+        btn.innerHTML = '<i data-lucide="check"></i> PDF সেভ হয়েছে!';
+        initLucide();
+        setTimeout(() => {
+          if (btn) {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            initLucide();
+          }
+        }, 2000);
+      }
+      return;
     }
+
+    if (window.html2pdf) {
+      const origElement = document.getElementById('receiptPaperArea');
+      window.html2pdf().set({
+        margin: [4, 4, 4, 4],
+        filename: filename,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false },
+        jsPDF: { unit: 'mm', format: 'a5', orientation: 'landscape' }
+      }).from(origElement).save().then(() => {
+        if (btn) {
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+          initLucide();
+        }
+      });
+      return;
+    }
+
+    printReceiptDirect();
   } catch (err) {
     console.error('PDF error', err);
     printReceiptDirect();
   } finally {
-    if (btn) {
+    if (btn && btn.disabled) {
       btn.innerHTML = originalText;
       btn.disabled = false;
       initLucide();
