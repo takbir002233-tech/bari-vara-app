@@ -1328,6 +1328,8 @@ function downloadReceiptImage() {
   try {
     const canvas = drawReceiptMemoToCanvas(activeReceiptItem || {});
     const imgData = canvas.toDataURL('image/jpeg', 0.98);
+    
+    // 1. Direct DataURL Anchor Trigger
     const a = document.createElement('a');
     a.href = imgData;
     a.download = filename;
@@ -1336,6 +1338,22 @@ function downloadReceiptImage() {
     setTimeout(() => {
       if (a.parentNode) a.parentNode.removeChild(a);
     }, 2000);
+
+    // 2. Blob URL Secondary Trigger (for Android WebView storage handlers)
+    canvas.toBlob((blob) => {
+      if (blob) {
+        const blobUrl = URL.createObjectURL(blob);
+        const a2 = document.createElement('a');
+        a2.href = blobUrl;
+        a2.download = filename;
+        document.body.appendChild(a2);
+        a2.click();
+        setTimeout(() => {
+          if (a2.parentNode) a2.parentNode.removeChild(a2);
+          URL.revokeObjectURL(blobUrl);
+        }, 3000);
+      }
+    }, 'image/jpeg', 0.98);
   } catch (err) {
     console.error('Image download error', err);
   }
