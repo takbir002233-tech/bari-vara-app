@@ -754,8 +754,7 @@ function handleSaveTenantNote() {
 // Ledger Presets Renderer
 function renderLedgerPresetChips() {
   const container = document.getElementById('ledgerPresetChips');
-  const datalist = document.getElementById('ledgerPresetsList');
-  if (!container || !datalist) return;
+  if (!container) return;
 
   const presets = appSettings.ledgerPresetCategories || [
     'রুম ভাড়া আদায়', 'বিদ্যুৎ বিল জমা', 'পাম্প মেরামত', 'ঝাড়ুদার বিল',
@@ -763,30 +762,25 @@ function renderLedgerPresetChips() {
   ];
 
   container.innerHTML = '';
-  datalist.innerHTML = '';
-
   presets.forEach(preset => {
-    // 1. Clickable Badges / Chips
     const chip = document.createElement('button');
     chip.type = 'button';
     chip.className = 'btn-preset-chip';
     chip.textContent = preset;
-    chip.style.cssText = 'background: #f3e8ff; color: #6b21a8; border: 1px solid #d8b4fe; border-radius: 12px; padding: 2px 8px; font-size: 11px; font-weight: 600; cursor: pointer;';
-    chip.addEventListener('click', () => {
-      const descInput = document.getElementById('ledgerDescription');
-      if (descInput) {
-        descInput.value = preset;
-        descInput.focus();
-      }
+    chip.style.cssText = 'background:#f3e8ff;color:#6b21a8;border:1px solid #d8b4fe;border-radius:14px;padding:3px 10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;margin:2px;';
+    chip.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      const d = document.getElementById('ledgerDescription');
+      if (d) { d.value = preset; d.focus(); }
     });
+    chip.addEventListener('touchstart', () => {
+      const d = document.getElementById('ledgerDescription');
+      if (d) d.value = preset;
+    }, { passive: true });
     container.appendChild(chip);
-
-    // 2. Datalist Options
-    const opt = document.createElement('option');
-    opt.value = preset;
-    datalist.appendChild(opt);
   });
 }
+
 
 // =========================================================================
 // 3. PAGE 3: মোট আয়-ব্যয় হিসাব
@@ -1643,87 +1637,51 @@ function downloadReceiptPDF() {
   const btn = document.getElementById('btnDownloadReceiptPDF');
   const originalText = btn ? btn.innerHTML : '';
   if (btn) {
-    btn.innerHTML = '<i data-lucide="loader"></i> PDF তৈরি হচ্ছে...';
+    btn.innerHTML = '<i data-lucide="loader"></i> প্রস্তুত হচ্ছে...';
     btn.disabled = true;
     initLucide();
   }
 
-  const room = activeReceiptItem ? (activeReceiptItem.roomNo || 'Room') : 'Room';
-  const month = currentSelectedMonth || 'Month';
-  const filename = `Electric_Bill_Room_${room}_${month}.pdf`;
-
   try {
     const canvas = drawReceiptMemoToCanvas(activeReceiptItem || {});
-    const imgData = canvas.toDataURL('image/jpeg', 0.98);
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
 
-    // 1. Try jsPDF if available in environment
-    const jsPdfClass = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
-    if (jsPdfClass) {
-      const pdf = new jsPdfClass({ orientation: 'landscape', unit: 'mm', format: 'a5' });
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const margin = 6;
-      const printWidth = pdfWidth - (margin * 2);
-      const printHeight = (canvas.height * printWidth) / canvas.width;
-      const yPos = (pdfHeight - printHeight) > 0 ? (pdfHeight - printHeight) / 2 : margin;
-      pdf.addImage(imgData, 'JPEG', margin, yPos, printWidth, printHeight);
-
-      try {
-        pdf.save(filename);
-      } catch (e) {}
-
-      try {
-        const pdfBlob = pdf.output('blob');
-        const blobUrl = URL.createObjectURL(pdfBlob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = blobUrl;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => {
-          if (a.parentNode) a.parentNode.removeChild(a);
-          URL.revokeObjectURL(blobUrl);
-        }, 3000);
-      } catch (blobErr) {}
-    } else {
-      // 2. Direct 100% Dependency-Free Pure PDF Blob Generator
-      const pdfBlob = createPurePdfBlobFromJpeg(imgData);
-      const blobUrl = URL.createObjectURL(pdfBlob);
-      const a = document.createElement('a');
-      a.style.display = 'none';
-      a.href = blobUrl;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => {
-        if (a.parentNode) a.parentNode.removeChild(a);
-        URL.revokeObjectURL(blobUrl);
-      }, 3000);
+    // Hidden print area — শুধু এই ছবিটাই print হবে, বাকি সব লুকাবে
+    let printDiv = document.getElementById('__pdf_print_area__');
+    if (!printDiv) {
+      printDiv = document.createElement('div');
+      printDiv.id = '__pdf_print_area__';
+      document.body.appendChild(printDiv);
     }
+    printDiv.style.cssText = 'display:block;position:fixed;top:0;left:0;width:100%;height:100%;background:#fff;z-index:99999;padding:0;margin:0;';
+    printDiv.innerHTML = '<img src="' + imgData + '" style="width:100%;height:auto;display:block;">';
 
-    if (btn) {
-      btn.innerHTML = '<i data-lucide="check"></i> PDF সেভ সম্পন্ন!';
-      initLucide();
+    // Print style: শুধু printDiv দেখাবে
+    let ps = document.getElementById('__pdf_print_style__');
+    if (!ps) {
+      ps = document.createElement('style');
+      ps.id = '__pdf_print_style__';
+      document.head.appendChild(ps);
+    }
+    ps.textContent = '@media print { body > *:not(#__pdf_print_area__) { display:none!important; } #__pdf_print_area__ { display:block!important; position:static!important; } }';
+
+    setTimeout(() => {
+      window.print();
       setTimeout(() => {
+        printDiv.style.display = 'none';
         if (btn) {
           btn.innerHTML = originalText;
           btn.disabled = false;
           initLucide();
         }
-      }, 2000);
-    }
+      }, 1500);
+    }, 400);
+
   } catch (err) {
     console.error('PDF error', err);
-    printReceiptDirect();
-    if (btn) {
-      btn.innerHTML = originalText;
-      btn.disabled = false;
-      initLucide();
-    }
+    if (btn) { btn.innerHTML = originalText; btn.disabled = false; initLucide(); }
   }
 }
-
 // 5. Gmail Cloud Backup
 function openGmailModal() {
   const modal = document.getElementById('gmailBackupModal');
@@ -1782,99 +1740,97 @@ async function uploadGmailBackup() {
     localStorage.setItem(STORAGE_GMAIL_LIST, JSON.stringify(savedGmails));
   }
 
+  const payload = {
+    gmail: activeGmail,
+    settings: appSettings,
+    electric: electricMonthsData,
+    rent: rentMonthsData,
+    ledger: ledgerData,
+    backupTimestamp: new Date().toISOString()
+  };
+
+  // localStorage-এ সেভ (same device restore এর জন্য)
+  localStorage.setItem('gmail_vault_' + activeGmail, JSON.stringify(payload));
+  updateGmailBadgeUI();
+
+  // JSON ফাইল ডাউনলোড (অন্য ডিভাইসে restore এর জন্য)
+  const jsonStr = JSON.stringify(payload, null, 2);
+  const filename = 'SmartBilling_Backup_' + activeGmail.split('@')[0] + '_' + getCurrentYearMonth() + '.json';
+  try {
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { if (a.parentNode) a.parentNode.removeChild(a); URL.revokeObjectURL(blobUrl); }, 3000);
+  } catch(e) {}
+
   if (msgEl) {
     msgEl.style.display = 'block';
-    msgEl.style.background = '#eff6ff';
-    msgEl.style.color = '#1e40af';
-    msgEl.textContent = '⏳ Gmail ক্লাউডে ব্যাকআপ নেওয়া হচ্ছে...';
-  }
-
-  try {
-    const payload = {
-      gmail: activeGmail,
-      settings: appSettings,
-      electric: electricMonthsData,
-      rent: rentMonthsData,
-      ledger: ledgerData,
-      backupTimestamp: new Date().toISOString()
-    };
-
-    localStorage.setItem('gmail_vault_' + activeGmail, JSON.stringify(payload));
-    
-    if (msgEl) {
-      msgEl.style.background = '#f0fdf4';
-      msgEl.style.color = '#166534';
-      msgEl.textContent = `✅ "${activeGmail}" এ ব্যাকআপ সম্পন্ন হয়েছে! অ্যাপ পুনরায় ইনস্টল করলেও এই Gmail দিয়ে ডাটা ফিরিয়ে আনা যাবে।`;
-    }
-
-    updateGmailBadgeUI();
-  } catch (err) {
-    if (msgEl) {
-      msgEl.style.background = '#f0fdf4';
-      msgEl.style.color = '#166534';
-      msgEl.textContent = '✅ ব্যাকআপ সংরক্ষিত হয়েছে!';
-    }
+    msgEl.style.background = '#f0fdf4';
+    msgEl.style.color = '#166534';
+    msgEl.textContent = '✅ ব্যাকআপ সম্পন্ন! "' + filename + '" ফাইলটি ডাউনলোড হয়েছে। এই ফাইলটি নিরাপদ জায়গায় রাখুন।';
   }
 }
 
 async function downloadGmailBackup() {
-  const input = document.getElementById('gmailAccountInput').value.trim();
   const msgEl = document.getElementById('gmailStatusMessage');
 
-  if (!input || !input.includes('@')) {
-    alert('আপনার Gmail আইডি লিখুন!');
-    return;
-  }
+  // ফাইল আপলোড করে restore
+  const fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.accept = '.json';
+  fileInput.style.display = 'none';
+  document.body.appendChild(fileInput);
 
-  const targetGmail = input.toLowerCase();
-  if (msgEl) {
-    msgEl.style.display = 'block';
-    msgEl.style.background = '#eff6ff';
-    msgEl.style.color = '#1e40af';
-    msgEl.textContent = '⏳ Gmail থেকে ডাটা রিস্টোর হচ্ছে...';
-  }
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-  try {
-    const vault = localStorage.getItem('gmail_vault_' + targetGmail);
-    if (vault) {
-      const parsed = JSON.parse(vault);
-      if (parsed.electric) electricMonthsData = parsed.electric;
-      if (parsed.rent) rentMonthsData = parsed.rent;
-      if (parsed.ledger) ledgerData = parsed.ledger;
-      if (parsed.settings) appSettings = parsed.settings;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const parsed = JSON.parse(ev.target.result);
+        if (parsed.electric) electricMonthsData = parsed.electric;
+        if (parsed.rent) rentMonthsData = parsed.rent;
+        if (parsed.ledger) ledgerData = parsed.ledger;
+        if (parsed.settings) appSettings = parsed.settings;
+        if (parsed.gmail) {
+          activeGmail = parsed.gmail;
+          if (!savedGmails.includes(activeGmail)) {
+            savedGmails.push(activeGmail);
+            localStorage.setItem(STORAGE_GMAIL_LIST, JSON.stringify(savedGmails));
+          }
+        }
 
-      activeGmail = targetGmail;
-      if (!savedGmails.includes(activeGmail)) {
-        savedGmails.push(activeGmail);
-        localStorage.setItem(STORAGE_GMAIL_LIST, JSON.stringify(savedGmails));
+        saveAppState();
+        setupMonthSelector();
+        renderCurrentPage();
+        updateGmailBadgeUI();
+
+        if (msgEl) {
+          msgEl.style.display = 'block';
+          msgEl.style.background = '#f0fdf4';
+          msgEl.style.color = '#166534';
+          msgEl.textContent = '🎉 ব্যাকআপ ফাইল থেকে সমস্ত ডাটা সফলভাবে রিস্টোর হয়েছে!';
+        }
+      } catch (err) {
+        if (msgEl) {
+          msgEl.style.display = 'block';
+          msgEl.style.background = '#fee2e2';
+          msgEl.style.color = '#991b1b';
+          msgEl.textContent = '❌ ফাইলটি সঠিক ব্যাকআপ ফাইল নয়। আবার চেষ্টা করুন।';
+        }
       }
+      if (fileInput.parentNode) fileInput.parentNode.removeChild(fileInput);
+    };
+    reader.readAsText(file);
+  });
 
-      saveAppState();
-      setupMonthSelector();
-      renderCurrentPage();
-      updateGmailBadgeUI();
-
-      if (msgEl) {
-        msgEl.style.background = '#f0fdf4';
-        msgEl.style.color = '#166534';
-        msgEl.textContent = `🎉 "${targetGmail}" থেকে সমস্ত ডাটা সফলভাবে রিস্টোর হয়েছে!`;
-      }
-    } else {
-      if (msgEl) {
-        msgEl.style.background = '#fee2e2';
-        msgEl.style.color = '#991b1b';
-        msgEl.textContent = `❌ "${targetGmail}" এ কোনো ব্যাকআপ ডাটা পাওয়া যায়নি।`;
-      }
-    }
-  } catch (err) {
-    if (msgEl) {
-      msgEl.style.background = '#fee2e2';
-      msgEl.style.color = '#991b1b';
-      msgEl.textContent = '❌ রিস্টোর করতে সমস্যা হয়েছে: ' + err.message;
-    }
-  }
+  fileInput.click();
 }
-
 // 6. Rollover & Settings
 function openRolloverModal() {
   const [y, m] = currentSelectedMonth.split('-').map(Number);
@@ -2035,11 +1991,35 @@ function exportJSONBackup() {
     ledger: ledgerData,
     exportDate: new Date().toISOString()
   };
-  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload, null, 2));
-  const link = document.createElement('a');
-  link.href = dataStr;
-  link.download = `Smart_Billing_Backup_${getCurrentYearMonth()}.json`;
-  link.click();
+  const jsonStr = JSON.stringify(payload, null, 2);
+  const filename = `Smart_Billing_Backup_${getCurrentYearMonth()}.json`;
+
+  // পদ্ধতি ১: Blob URL (Android WebView-এ সবচেয়ে ভালো কাজ করে)
+  try {
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const blobUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => {
+      if (link.parentNode) link.parentNode.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    }, 3000);
+    return;
+  } catch (e) {}
+
+  // পদ্ধতি ২: Data URI fallback
+  try {
+    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(jsonStr);
+    const link = document.createElement('a');
+    link.href = dataStr;
+    link.download = filename;
+    link.click();
+  } catch (e2) {
+    alert('ব্যাকআপ ডাউনলোড করতে পারছি না। দয়া করে অন্য ব্রাউজারে চেষ্টা করুন।');
+  }
 }
 
 // Android Back Button & Exit App Modal
